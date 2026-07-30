@@ -151,7 +151,7 @@ class SpawnManager {
         .toList();
     for (final b in balloons) {
       spawnExplosion(b.position.clone(), type: b.balloonType);
-      _balloonPool.release(b);
+      b.explodeAndReturn();
     }
     return balloons;
   }
@@ -164,7 +164,7 @@ class SpawnManager {
         .toList();
     for (final b in birds) {
       spawnExplosion(b.position.clone(), type: BalloonType.red); // Efecto rojo para el ave
-      _birdPool.release(b);
+      b.disappear();
     }
   }
 

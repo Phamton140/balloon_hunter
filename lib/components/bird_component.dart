@@ -270,7 +270,7 @@ class BirdComponent extends PositionComponent
     });
   }
 
-  void _deactivate() {
+  void disappear() {
     _active = false;
     if (_pool != null) {
       _pool.release(this);
