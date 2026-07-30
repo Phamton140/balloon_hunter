@@ -19,6 +19,7 @@ class AudioManager {
   int _currentSongIndex = 0;
   AudioPlayer? _bgmPlayer;
   StreamSubscription? _playerCompleteSubscription;
+  final Map<String, AudioPool> _sfxPools = {};
 
   bool get musicEnabled => _musicEnabled;
   bool get sfxEnabled => _sfxEnabled;
@@ -38,6 +39,12 @@ class AudioManager {
         'bird_hit.mp3',
         'level_up.mp3',
       ]);
+
+      _sfxPools['pop_bubble.mp3'] = await FlameAudio.createPool('pop_bubble.mp3', minPlayers: 2, maxPlayers: 10);
+      _sfxPools['ice.mp3'] = await FlameAudio.createPool('ice.mp3', minPlayers: 1, maxPlayers: 5);
+      _sfxPools['pop_black.mp3'] = await FlameAudio.createPool('pop_black.mp3', minPlayers: 1, maxPlayers: 4);
+      _sfxPools['bird_hit.mp3'] = await FlameAudio.createPool('bird_hit.mp3', minPlayers: 1, maxPlayers: 3);
+      _sfxPools['level_up.mp3'] = await FlameAudio.createPool('level_up.mp3', minPlayers: 1, maxPlayers: 2);
     } catch (e) {
       debugPrint('[AudioManager] Error loading audio: $e');
     }
@@ -147,6 +154,9 @@ class AudioManager {
     try {
       await _playerCompleteSubscription?.cancel();
       await _bgmPlayer?.dispose();
+      for (final pool in _sfxPools.values) {
+        pool.dispose();
+      }
       FlameAudio.audioCache.clearAll();
     } catch (e) {
       debugPrint('[AudioManager] Dispose error: $e');
@@ -158,7 +168,11 @@ class AudioManager {
   Future<void> _playSfx(String filename) async {
     if (!_sfxEnabled) return;
     try {
-      await FlameAudio.play(filename, volume: _sfxVolume);
+      if (_sfxPools.containsKey(filename)) {
+        await _sfxPools[filename]!.start(volume: _sfxVolume);
+      } else {
+        await FlameAudio.play(filename, volume: _sfxVolume);
+      }
     } catch (e) {
       debugPrint('[AudioManager] SFX error ($filename): $e');
     }

@@ -47,7 +47,7 @@ class GameOverScreen extends StatelessWidget {
       child: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.only(top: 24, left: 24, right: 24, bottom: 90),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -90,11 +90,11 @@ class GameOverScreen extends StatelessWidget {
                       .scale(begin: const Offset(1.0, 1.0), end: const Offset(1.05, 1.05), duration: 600.ms),
                 ],
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Stats
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(20),
@@ -113,7 +113,7 @@ class GameOverScreen extends StatelessWidget {
                   ),
                 ).animate().fadeIn(delay: 500.ms),
 
-                const SizedBox(height: 28),
+                const SizedBox(height: 20),
 
                 // Botón de revivir (arriba)
                 AnimatedBuilder(
@@ -184,7 +184,7 @@ class _GOStatRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
+    padding: const EdgeInsets.symmetric(vertical: 2),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [

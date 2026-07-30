@@ -1,4 +1,4 @@
-package com.balloonhunter.balloon_hunter
+package com.dreamsoftgroup.balloon_hunter.app
 
 import io.flutter.embedding.android.FlutterActivity
 
