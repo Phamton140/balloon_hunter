@@ -42,8 +42,9 @@ class BalloonComponent extends PositionComponent
   final Random _random = Random();
 
   BalloonComponent() {
-    width = GameConstants.balloonWidth;
-    height = GameConstants.balloonHeight;
+    // Hitbox expandida para AABB
+    width = GameConstants.balloonWidth + 60.0;
+    height = GameConstants.balloonHeight + 60.0;
     anchor = Anchor.center;
   }
 
@@ -183,6 +184,7 @@ class BalloonComponent extends PositionComponent
   @override
   void onTapDown(TapDownEvent event) {
     if (!_active || _tapped) return;
+    event.handled = true;
     _tapped = true;
     onTapped?.call(this);
   }
@@ -214,13 +216,4 @@ class BalloonComponent extends PositionComponent
     _speed *= multiplier;
   }
   
-  @override
-  bool containsLocalPoint(Vector2 point) {
-    // Ampliar el área de detección de toques en 30 píxeles por cada lado
-    final margin = 30.0;
-    return point.x >= -margin &&
-           point.y >= -margin &&
-           point.x <= size.x + margin &&
-           point.y <= size.y + margin;
-  }
 }

@@ -41,8 +41,9 @@ class BirdComponent extends PositionComponent
   final Random _random = Random();
 
   BirdComponent() {
-    width = GameConstants.birdWidth;
-    height = GameConstants.birdHeight;
+    // Hitbox expandida para AABB (10px por lado)
+    width = GameConstants.birdWidth + 20.0;
+    height = GameConstants.birdHeight + 20.0;
     anchor = Anchor.center;
     priority = 10; // Siempre frente a los globos (z-index mayor)
   }
@@ -224,6 +225,7 @@ class BirdComponent extends PositionComponent
   @override
   void onTapDown(TapDownEvent event) {
     if (!_active || game.gameManager.isFrozen) return;
+    event.handled = true;
     _active = false;
     
     // Reproducir sonido de Game Over
@@ -279,13 +281,4 @@ class BirdComponent extends PositionComponent
     }
   }
 
-  @override
-  bool containsLocalPoint(Vector2 point) {
-    // Reducido a 5.0 para que sea más difícil darle por accidente al ave
-    final margin = 5.0;
-    return point.x >= -margin &&
-           point.y >= -margin &&
-           point.x <= size.x + margin &&
-           point.y <= size.y + margin;
-  }
 }

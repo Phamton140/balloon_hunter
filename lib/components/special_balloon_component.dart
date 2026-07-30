@@ -33,8 +33,8 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
   final Random _random = Random();
 
   SpecialBalloonComponent() {
-    width = GameConstants.balloonWidth * 1.3; // ligeramente más grande
-    height = GameConstants.balloonHeight * 1.3;
+    width = (GameConstants.balloonWidth * 1.3) + 60.0; // hitbox expandida
+    height = (GameConstants.balloonHeight * 1.3) + 60.0;
     anchor = Anchor.center;
   }
 
@@ -238,6 +238,7 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
   @override
   void onTapDown(TapDownEvent event) {
     if (!_active || _tapped) return;
+    event.handled = true;
     _tapped = true;
     _active = false;
     onTapped?.call(this);
@@ -249,13 +250,4 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
     removeFromParent();
   }
 
-  @override
-  bool containsLocalPoint(Vector2 point) {
-    // Ampliar el área de detección de toques en 30 píxeles por cada lado
-    final margin = 30.0;
-    return point.x >= -margin &&
-           point.y >= -margin &&
-           point.x <= size.x + margin &&
-           point.y <= size.y + margin;
-  }
 }
