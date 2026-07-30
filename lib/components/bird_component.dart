@@ -117,54 +117,108 @@ class BirdComponent extends PositionComponent
     canvas.save();
     canvas.translate(size.x / 2, size.y / 2);
 
-    // Diseño premium de origami ave
-    _renderFallbackBird(canvas);
+    // Diseño realista caricaturizado
+    _renderRealisticBird(canvas);
 
     canvas.restore();
   }
 
-  void _renderFallbackBird(Canvas canvas) {
-    final paint = Paint()..color = const Color(0xFFFF3366); // Rosa neón
-    final darkPaint = Paint()..color = const Color(0xFFD81B60); // Más oscuro
-    final highlightPaint = Paint()..color = const Color(0xFFFF80AB); // Brillo
-    final glowPaint = Paint()
-      ..color = const Color(0xFFFF3366).withValues(alpha: 0.5)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
+  void _renderRealisticBird(Canvas canvas) {
+    // Definimos colores para un ave rosada (para contrastar con el cielo azul)
+    final bodyColor = const Color(0xFFFF4081); // Rosa brillante
+    final bellyColor = const Color(0xFFF8BBD0); // Rosa claro para la barriga
+    final wingColor = const Color(0xFFE91E63); // Rosa más oscuro para las alas
+    final beakColor = const Color(0xFFFFCA28); // Amarillo (se mantiene igual)
+    final tailColor = const Color(0xFFD81B60); // Rosa intenso para la cola
 
-    // Aura
-    canvas.drawCircle(Offset.zero, 25, glowPaint);
+    final paintBody = Paint()..color = bodyColor;
+    final paintBelly = Paint()..color = bellyColor;
+    final paintWing = Paint()..color = wingColor;
+    final paintBeak = Paint()..color = beakColor;
+    final paintTail = Paint()..color = tailColor;
 
-    // Movimiento del ala 3D
-    final wingOffsetY = sin(_wingAngle) * 18;
+    // Movimiento del ala (simulando 3D con escalado)
+    final flapValue = sin(_wingTime); 
+    final wingScaleY = flapValue.abs() * 0.8 + 0.2; // Escala Y entre 0.2 y 1.0
+    final wingOffsetY = flapValue * 4;
 
-    // Ala Izquierda
-    final pathLeft = Path()
-      ..moveTo(0, -10)
-      ..lineTo(-25, wingOffsetY)
-      ..lineTo(-5, 15)
+    // Sombra para profundidad
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.15)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+    canvas.drawOval(Rect.fromCenter(center: const Offset(0, 4), width: 32, height: 44), shadowPaint);
+
+    // 1. Cola
+    final tailPath = Path()
+      ..moveTo(0, 10)
+      ..lineTo(-8, 24)
+      ..lineTo(0, 28)
+      ..lineTo(8, 24)
       ..close();
-    canvas.drawPath(pathLeft, paint);
+    canvas.drawPath(tailPath, paintTail);
+
+    // 2. Alas (dibujadas debajo del cuerpo)
+    // Ala Izquierda
+    canvas.save();
+    canvas.translate(-9, 2 + wingOffsetY);
+    canvas.scale(1.0, wingScaleY);
+    final leftWing = Path()
+      ..moveTo(0, -6)
+      ..quadraticBezierTo(-22, -15, -25, 5)
+      ..quadraticBezierTo(-15, 12, 0, 8)
+      ..close();
+    canvas.drawPath(leftWing, paintWing);
+    canvas.restore();
 
     // Ala Derecha
-    final pathRight = Path()
-      ..moveTo(0, -10)
-      ..lineTo(25, wingOffsetY)
-      ..lineTo(5, 15)
+    canvas.save();
+    canvas.translate(9, 2 + wingOffsetY);
+    canvas.scale(1.0, wingScaleY);
+    final rightWing = Path()
+      ..moveTo(0, -6)
+      ..quadraticBezierTo(22, -15, 25, 5)
+      ..quadraticBezierTo(15, 12, 0, 8)
       ..close();
-    canvas.drawPath(pathRight, darkPaint);
+    canvas.drawPath(rightWing, paintWing);
+    canvas.restore();
 
-    // Cuerpo / Cabeza
-    final body = Path()
-      ..moveTo(0, -28) // Pico
-      ..lineTo(8, -8)
-      ..lineTo(0, 22) // Cola
-      ..lineTo(-8, -8)
+    // 3. Cuerpo
+    canvas.drawOval(Rect.fromCenter(center: const Offset(0, 6), width: 22, height: 28), paintBody);
+    
+    // Barriga
+    canvas.drawOval(Rect.fromCenter(center: const Offset(0, 8), width: 14, height: 20), paintBelly);
+
+    // 4. Cabeza
+    canvas.drawCircle(const Offset(0, -10), 12, paintBody);
+
+    // 5. Pico
+    final beak = Path()
+      ..moveTo(-5, -14)
+      ..lineTo(5, -14)
+      ..lineTo(0, -24)
       ..close();
-    canvas.drawPath(body, highlightPaint);
+    canvas.drawPath(beak, paintBeak);
+    // Linea central del pico
+    canvas.drawLine(const Offset(0, -14), const Offset(0, -23), Paint()..color = Colors.orange..strokeWidth = 1);
 
-    // Ojos (destellos)
-    canvas.drawCircle(const Offset(-3, -12), 2, Paint()..color = Colors.white);
-    canvas.drawCircle(const Offset(3, -12), 2, Paint()..color = Colors.white);
+    // 6. Ojos
+    final eyePaint = Paint()..color = Colors.white;
+    final pupilPaint = Paint()..color = Colors.black;
+    // Ojo Izquierdo
+    canvas.drawCircle(const Offset(-5, -11), 3.5, eyePaint);
+    canvas.drawCircle(const Offset(-5, -12), 1.5, pupilPaint); // Mira hacia arriba
+    // Ojo Derecho
+    canvas.drawCircle(const Offset(5, -11), 3.5, eyePaint);
+    canvas.drawCircle(const Offset(5, -12), 1.5, pupilPaint);
+    
+    // 7. Cejas enojadas (para darle personalidad de enemigo)
+    final browPaint = Paint()
+      ..color = const Color(0xFF880E4F) // Rosa súper oscuro casi vino
+      ..strokeWidth = 1.8
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(const Offset(-8, -15), const Offset(-2, -13), browPaint);
+    canvas.drawLine(const Offset(8, -15), const Offset(2, -13), browPaint);
   }
 
   @override
