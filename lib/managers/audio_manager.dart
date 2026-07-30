@@ -1,7 +1,9 @@
 // lib/managers/audio_manager.dart
 // Gestor de audio: música de fondo y efectos de sonido
 
+import 'dart:async';
 import 'package:flame_audio/flame_audio.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 
 /// Gestiona toda la reproducción de audio del juego.
@@ -12,6 +14,12 @@ class AudioManager {
   double _musicVolume = 0.6;
   double _sfxVolume = 1.0;
 
+  // -- Playlist --
+  final List<String> _playlist = ['bgm1.mp3', 'bgm2.mp3', 'bgm3.mp3'];
+  int _currentSongIndex = 0;
+  AudioPlayer? _bgmPlayer;
+  StreamSubscription? _playerCompleteSubscription;
+
   bool get musicEnabled => _musicEnabled;
   bool get sfxEnabled => _sfxEnabled;
   double get musicVolume => _musicVolume;
@@ -21,11 +29,11 @@ class AudioManager {
   Future<void> initialize() async {
     try {
       await FlameAudio.audioCache.loadAll([
-        'bgm.mp3',
-        'pop_yellow.mp3',
-        'pop_green.mp3',
-        'pop_red.mp3',
-        'pop_blue.mp3',
+        'bgm1.mp3',
+        'bgm2.mp3',
+        'bgm3.mp3',
+        'pop_bubble.mp3',
+        'ice.mp3',
         'pop_black.mp3',
         'bird_hit.mp3',
         'level_up.mp3',
@@ -35,20 +43,33 @@ class AudioManager {
     }
   }
 
-  /// Reproduce la música de fondo en bucle
+  /// Reproduce la música de fondo actual
   Future<void> playBgm() async {
     if (!_musicEnabled) return;
     try {
-      await FlameAudio.bgm.play('bgm.mp3', volume: _musicVolume);
+      if (_bgmPlayer == null) {
+        _bgmPlayer = AudioPlayer();
+        _playerCompleteSubscription = _bgmPlayer!.onPlayerComplete.listen((_) {
+          _playNextSong();
+        });
+      }
+      await _bgmPlayer!.setVolume(_musicVolume);
+      // FlameAudio cachea en la ruta de assets/audio. Audioplayers usa AssetSource
+      await _bgmPlayer!.play(AssetSource('audio/${_playlist[_currentSongIndex]}'));
     } catch (e) {
       debugPrint('[AudioManager] BGM error: $e');
     }
   }
 
+  void _playNextSong() {
+    _currentSongIndex = (_currentSongIndex + 1) % _playlist.length;
+    playBgm();
+  }
+
   /// Pausa la música de fondo
   Future<void> pauseBgm() async {
     try {
-      await FlameAudio.bgm.pause();
+      await _bgmPlayer?.pause();
     } catch (e) {
       debugPrint('[AudioManager] Pause BGM error: $e');
     }
@@ -58,7 +79,11 @@ class AudioManager {
   Future<void> resumeBgm() async {
     if (!_musicEnabled) return;
     try {
-      await FlameAudio.bgm.resume();
+      if (_bgmPlayer?.state == PlayerState.paused) {
+        await _bgmPlayer?.resume();
+      } else {
+        await playBgm();
+      }
     } catch (e) {
       debugPrint('[AudioManager] Resume BGM error: $e');
     }
@@ -67,23 +92,23 @@ class AudioManager {
   /// Detiene la música de fondo
   Future<void> stopBgm() async {
     try {
-      await FlameAudio.bgm.stop();
+      await _bgmPlayer?.stop();
     } catch (e) {
       debugPrint('[AudioManager] Stop BGM error: $e');
     }
   }
 
   /// Sonido al explotar un globo amarillo
-  Future<void> playPopYellow() async => _playSfx('pop_yellow.mp3');
+  Future<void> playPopYellow() async => _playSfx('pop_bubble.mp3');
 
   /// Sonido al explotar un globo verde
-  Future<void> playPopGreen() async => _playSfx('pop_green.mp3');
+  Future<void> playPopGreen() async => _playSfx('pop_bubble.mp3');
 
   /// Sonido al explotar un globo rojo
-  Future<void> playPopRed() async => _playSfx('pop_red.mp3');
+  Future<void> playPopRed() async => _playSfx('pop_bubble.mp3');
 
   /// Sonido al activar el globo azul (efecto hielo)
-  Future<void> playPopBlue() async => _playSfx('pop_blue.mp3');
+  Future<void> playPopBlue() async => _playSfx('ice.mp3');
 
   /// Sonido al activar el globo negro (explosión masiva)
   Future<void> playPopBlack() async => _playSfx('pop_black.mp3');
@@ -113,14 +138,15 @@ class AudioManager {
   Future<void> setMusicVolume(double volume) async {
     _musicVolume = volume.clamp(0.0, 1.0);
     if (_musicEnabled) {
-      FlameAudio.bgm.audioPlayer.setVolume(_musicVolume);
+      await _bgmPlayer?.setVolume(_musicVolume);
     }
   }
 
   /// Libera los recursos de audio
   Future<void> dispose() async {
     try {
-      await FlameAudio.bgm.stop();
+      await _playerCompleteSubscription?.cancel();
+      await _bgmPlayer?.dispose();
       FlameAudio.audioCache.clearAll();
     } catch (e) {
       debugPrint('[AudioManager] Dispose error: $e');
@@ -132,8 +158,7 @@ class AudioManager {
   Future<void> _playSfx(String filename) async {
     if (!_sfxEnabled) return;
     try {
-      // await FlameAudio.play(filename, volume: _sfxVolume);
-      // Deshabilitado temporalmente para evitar lag/stutter si los archivos no existen
+      await FlameAudio.play(filename, volume: _sfxVolume);
     } catch (e) {
       debugPrint('[AudioManager] SFX error ($filename): $e');
     }

@@ -32,6 +32,7 @@ class BalloonComponent extends PositionComponent
 
   // -- Estado --
   bool _active = false;
+  bool get isActive => _active;
   bool _tapped = false;
 
   // -- Callbacks --
@@ -211,5 +212,15 @@ class BalloonComponent extends PositionComponent
   /// Actualiza la velocidad en tiempo real (para slow motion)
   void applySlowMultiplier(double multiplier) {
     _speed *= multiplier;
+  }
+  
+  @override
+  bool containsLocalPoint(Vector2 point) {
+    // Ampliar el área de detección de toques en 30 píxeles por cada lado
+    final margin = 30.0;
+    return point.x >= -margin &&
+           point.y >= -margin &&
+           point.x <= size.x + margin &&
+           point.y <= size.y + margin;
   }
 }

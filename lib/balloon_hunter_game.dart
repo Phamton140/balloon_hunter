@@ -303,6 +303,9 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
     if (totalPoints > 0) {
       scoreManager.addBulkPoints(totalPoints, balloons.length);
     }
+    
+    // Y limpiar las aves de la pantalla sin sumar puntos
+    spawnManager.removeAllBirds(children.toList());
   }
 
   // ==========================================================================

@@ -20,6 +20,7 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
   double _lifeTimer = 0.0;
   double _speed = 300.0;
   bool _active = false;
+  bool get isActive => _active;
   bool _tapped = false;
 
   // Animación de pulso
@@ -246,5 +247,15 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
   void _disappear() {
     _active = false;
     removeFromParent();
+  }
+
+  @override
+  bool containsLocalPoint(Vector2 point) {
+    // Ampliar el área de detección de toques en 30 píxeles por cada lado
+    final margin = 30.0;
+    return point.x >= -margin &&
+           point.y >= -margin &&
+           point.x <= size.x + margin &&
+           point.y <= size.y + margin;
   }
 }

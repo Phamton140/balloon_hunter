@@ -115,7 +115,6 @@ class GameManager extends ChangeNotifier {
     if (_state != GameState.playing) return;
     timerManager.pause();
     changeState(GameState.paused);
-    await audioManager.pauseBgm();
   }
 
   /// Reanuda el juego
@@ -123,7 +122,6 @@ class GameManager extends ChangeNotifier {
     if (_state != GameState.paused) return;
     timerManager.start();
     changeState(GameState.playing);
-    await audioManager.resumeBgm();
   }
 
   /// Llama al iniciar un nivel completado

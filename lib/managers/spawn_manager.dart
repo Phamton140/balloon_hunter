@@ -147,13 +147,25 @@ class SpawnManager {
   List<BalloonComponent> removeAllNormalBalloons(List<Component> gameChildren) {
     final balloons = gameChildren
         .whereType<BalloonComponent>()
-        .where((b) => !b.balloonType.isSpecial)
+        .where((b) => !b.balloonType.isSpecial && b.isActive)
         .toList();
     for (final b in balloons) {
       spawnExplosion(b.position.clone(), type: b.balloonType);
       _balloonPool.release(b);
     }
     return balloons;
+  }
+
+  /// Elimina todas las aves activas (para globo negro)
+  void removeAllBirds(List<Component> gameChildren) {
+    final birds = gameChildren
+        .whereType<BirdComponent>()
+        .where((b) => b.isActive)
+        .toList();
+    for (final b in birds) {
+      spawnExplosion(b.position.clone(), type: BalloonType.red); // Efecto rojo para el ave
+      _birdPool.release(b);
+    }
   }
 
   void reset() {

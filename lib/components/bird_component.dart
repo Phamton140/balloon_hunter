@@ -21,6 +21,7 @@ class BirdComponent extends PositionComponent
   double _time = 0.0;
   double _startX = 0.0;
   bool _active = false;
+  bool get isActive => _active;
   bool _tapped = false;
   
   // Parámetros de movimiento errático
@@ -43,6 +44,7 @@ class BirdComponent extends PositionComponent
     width = GameConstants.birdWidth;
     height = GameConstants.birdHeight;
     anchor = Anchor.center;
+    priority = 10; // Siempre frente a los globos (z-index mayor)
   }
 
   /// Configura el ave antes de añadirla al juego
@@ -221,5 +223,15 @@ class BirdComponent extends PositionComponent
     } else {
       removeFromParent();
     }
+  }
+
+  @override
+  bool containsLocalPoint(Vector2 point) {
+    // Reducido a 5.0 para que sea más difícil darle por accidente al ave
+    final margin = 5.0;
+    return point.x >= -margin &&
+           point.y >= -margin &&
+           point.x <= size.x + margin &&
+           point.y <= size.y + margin;
   }
 }

@@ -114,16 +114,7 @@ class GameOverScreen extends StatelessWidget {
 
                 const SizedBox(height: 28),
 
-                // Play again
-                _GOButton(
-                  label: '🔄 VOLVER A JUGAR',
-                  gradient: const LinearGradient(colors: [Palette.menuAccent, Color(0xFFFF6B81)]),
-                  onTap: () => onPlayAgain?.call(),
-                ).animate().fadeIn(delay: 700.ms),
-
-                const SizedBox(height: 12),
-
-                // Botón de revivir (solo si hay anuncio cargado)
+                // Botón de revivir (arriba)
                 AnimatedBuilder(
                   animation: AdManager(),
                   builder: (context, child) {
@@ -138,12 +129,19 @@ class GameOverScreen extends StatelessWidget {
                               onRevive?.call();
                             });
                           },
-                        ).animate().scale(delay: 800.ms),
+                        ).animate().scale(delay: 700.ms),
                       );
                     }
                     return const SizedBox.shrink();
                   },
                 ),
+
+                // Play again (debajo)
+                _GOButton(
+                  label: '🔄 VOLVER A JUGAR',
+                  gradient: const LinearGradient(colors: [Palette.menuAccent, Color(0xFFFF6B81)]),
+                  onTap: () => onPlayAgain?.call(),
+                ).animate().fadeIn(delay: 800.ms),
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -204,7 +202,9 @@ class _GOButton extends StatelessWidget {
   Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
     child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
+      width: 260, // Ancho fijo para que ambos botones midan lo mismo
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
         gradient: gradient,
         borderRadius: BorderRadius.circular(30),

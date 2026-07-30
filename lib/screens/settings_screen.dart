@@ -109,32 +109,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       },
                     ),
                   ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.2),
-
-                  const SizedBox(height: 24),
-
-                  // Info
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.06),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white12),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          '🎈 Balloon Hunter',
-                          style: GoogleFonts.fredoka(fontSize: 18, color: Colors.white),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Versión 1.0.0\nFlutter + Flame Engine',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.fredoka(fontSize: 13, color: Colors.white38),
-                        ),
-                      ],
-                    ),
-                  ).animate().fadeIn(delay: 400.ms),
                 ],
               ),
             ),
