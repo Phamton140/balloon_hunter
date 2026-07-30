@@ -5,11 +5,17 @@
 import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
+import 'package:flame/particles.dart';
 import 'package:flutter/material.dart';
+import '../models/level_config.dart';
+import '../models/game_state.dart';
 import '../utils/constants.dart';
+import '../balloon_hunter_game.dart';
 
-/// Componente de ave que sube verticalmente. Al ser tocada → GAME OVER.
-class BirdComponent extends PositionComponent with TapCallbacks, HasGameReference {
+/// Representa un ave (obstáculo).
+/// Si el jugador la toca, es Game Over.
+class BirdComponent extends PositionComponent
+    with TapCallbacks, HasGameReference<BalloonHunterGame> {
   double _baseSpeed = 0.0;
   double _speedMultiplier = 1.0;
   double _time = 0.0;
@@ -73,6 +79,8 @@ class BirdComponent extends PositionComponent with TapCallbacks, HasGameReferenc
   @override
   void update(double dt) {
     if (!_active) return;
+    if (game.gameManager.state != GameState.playing || game.gameManager.isFrozen) return;
+    
     super.update(dt);
 
     _time += dt;
@@ -159,15 +167,51 @@ class BirdComponent extends PositionComponent with TapCallbacks, HasGameReferenc
 
   @override
   void onTapDown(TapDownEvent event) {
-    if (!_active || _tapped) return;
-    _tapped = true;
+    if (!_active || game.gameManager.isFrozen) return;
     _active = false;
-    onTapped?.call(this);
-    if (_pool != null) {
-      _pool.release(this);
-    } else {
-      removeFromParent();
-    }
+    
+    // Reproducir sonido de Game Over
+    game.gameManager.audioManager.playBirdHit();
+    
+    // Congelar el juego para la animación
+    game.gameManager.freezeForGameOver();
+    
+    // Reproducir explosión visual
+    final explosion = ParticleSystemComponent(
+      position: position,
+      particle: Particle.generate(
+        count: 40,
+        lifespan: 1.5,
+        generator: (i) {
+          final random = Random();
+          final speed = random.nextDouble() * 200 + 50;
+          final angle = random.nextDouble() * 2 * pi;
+          final vx = cos(angle) * speed;
+          final vy = sin(angle) * speed;
+          
+          return AcceleratedParticle(
+            acceleration: Vector2(0, 300), // Gravedad
+            speed: Vector2(vx, vy),
+            position: Vector2.zero(),
+            child: ComputedParticle(
+              renderer: (canvas, particle) {
+                final paint = Paint()
+                  ..color = const Color(0xFFFF3366).withOpacity(1 - particle.progress);
+                canvas.drawCircle(Offset.zero, 3 + random.nextDouble() * 4, paint);
+              },
+            ),
+          );
+        },
+      ),
+    );
+    game.add(explosion);
+
+    // Esperar 2 segundos y disparar Game Over
+    Future.delayed(const Duration(seconds: 2), () {
+      if (game.gameManager.isFrozen) {
+        game.gameManager.triggerGameOver();
+      }
+    });
   }
 
   void _deactivate() {

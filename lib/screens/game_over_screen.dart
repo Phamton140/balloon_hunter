@@ -4,12 +4,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:share_plus/share_plus.dart';
 import '../managers/game_manager.dart';
+import '../managers/ad_manager.dart';
 import '../utils/palette.dart';
 
 class GameOverScreen extends StatelessWidget {
   final GameManager gameManager;
   final bool birdHit; // true si fue por tocar un ave
   final VoidCallback? onPlayAgain;
+  final VoidCallback? onRevive;
   final VoidCallback? onMenu;
 
   const GameOverScreen({
@@ -17,6 +19,7 @@ class GameOverScreen extends StatelessWidget {
     required this.gameManager,
     this.birdHit = false,
     this.onPlayAgain,
+    this.onRevive,
     this.onMenu,
   });
 
@@ -119,6 +122,28 @@ class GameOverScreen extends StatelessWidget {
                 ).animate().fadeIn(delay: 700.ms),
 
                 const SizedBox(height: 12),
+
+                // Botón de revivir (solo si hay anuncio cargado)
+                AnimatedBuilder(
+                  animation: AdManager(),
+                  builder: (context, child) {
+                    if (AdManager().isRewardedAdLoaded) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _GOButton(
+                          label: '🎬 REVIVIR NIVEL',
+                          gradient: const LinearGradient(colors: [Palette.balloonGreen, Color(0xFF00B09B)]),
+                          onTap: () {
+                            AdManager().showRewardedAd(onRewardEarned: () {
+                              onRevive?.call();
+                            });
+                          },
+                        ).animate().scale(delay: 800.ms),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

@@ -81,6 +81,44 @@ class PauseScreen extends StatelessWidget {
                 ),
               ),
 
+              // Control de Volumen de Música
+              ListenableBuilder(
+                listenable: gameManager,
+                builder: (context, _) {
+                  if (!gameManager.audioManager.musicEnabled) {
+                    return const SizedBox.shrink();
+                  }
+                  return Column(
+                    children: [
+                      const SizedBox(height: 16),
+                      Text(
+                        'Volumen',
+                        style: GoogleFonts.fredoka(fontSize: 14, color: Colors.white70),
+                      ),
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: Palette.balloonBlue,
+                          inactiveTrackColor: Colors.white24,
+                          thumbColor: Palette.balloonBlue,
+                          overlayColor: Palette.balloonBlue.withOpacity(0.2),
+                          trackHeight: 4,
+                        ),
+                        child: Slider(
+                          value: gameManager.audioManager.musicVolume,
+                          min: 0.0,
+                          max: 1.0,
+                          onChanged: (value) async {
+                            await gameManager.audioManager.setMusicVolume(value);
+                            // ignore: invalid_use_of_protected_member
+                            (gameManager as dynamic).notifyListeners?.call();
+                          },
+                        ),
+                      ),
+                    ],
+                  ).animate().fadeIn();
+                },
+              ),
+
               const SizedBox(height: 24),
 
               // Reanudar

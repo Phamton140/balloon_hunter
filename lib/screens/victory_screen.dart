@@ -24,7 +24,7 @@ class VictoryScreen extends StatefulWidget {
 
 class _VictoryScreenState extends State<VictoryScreen> {
   Timer? _timer;
-  int _countdown = 3;
+  int _countdown = 2;
 
   @override
   void initState() {
@@ -96,27 +96,6 @@ class _VictoryScreenState extends State<VictoryScreen> {
                 }),
               ),
 
-              const SizedBox(height: 48),
-
-              Text(
-                'Siguiente nivel en...',
-                style: GoogleFonts.fredoka(
-                  fontSize: 24,
-                  color: Colors.white70,
-                ),
-              ).animate().fadeIn(delay: 800.ms),
-
-              const SizedBox(height: 12),
-
-              Text(
-                '$_countdown',
-                key: ValueKey<int>(_countdown),
-                style: GoogleFonts.fredoka(
-                  fontSize: 64,
-                  color: const Color(0xFF43E97B),
-                  fontWeight: FontWeight.bold,
-                ),
-              ).animate(key: ValueKey<int>(_countdown)).fadeIn().scale(begin: const Offset(1.5, 1.5)),
             ],
           ),
         ),

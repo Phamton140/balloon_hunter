@@ -98,9 +98,11 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
 
   @override
   void update(double dt) {
-    if (gameManager.state != GameState.playing) return;
-    
+    // Es vital llamar a super.update SIEMPRE para que Flame procese el ciclo
+    // de vida de los componentes, añada hijos y procese animaciones.
     super.update(dt);
+
+    if (gameManager.state != GameState.playing || gameManager.isFrozen) return;
 
     // Actualizar gestores de tiempo
     timerManager.update(dt);

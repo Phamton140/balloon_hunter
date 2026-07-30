@@ -6,6 +6,8 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-8257738486901222~8679984069</string>
 	<key>CFBundleDisplayName</key>
 	<string>Balloon Hunter</string>
 	<key>CFBundleExecutable</key>

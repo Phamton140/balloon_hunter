@@ -4,13 +4,15 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 import '../models/balloon_type.dart';
+import '../models/game_state.dart';
 import '../utils/constants.dart';
+import '../balloon_hunter_game.dart';
 
 /// Representa un globo estándar en el juego.
 /// Al ser tocado notifica al juego para procesar el impacto.
 /// Compatible con Object Pooling: usa configure() para resetear estado.
 class BalloonComponent extends PositionComponent
-    with TapCallbacks, HasGameReference {
+    with TapCallbacks, HasGameReference<BalloonHunterGame> {
   // -- Tipo y propiedades --
   BalloonType _type = BalloonType.yellow;
   BalloonType get balloonType => _type;
@@ -84,6 +86,7 @@ class BalloonComponent extends PositionComponent
   @override
   void update(double dt) {
     if (!_active) return;
+    if (game.gameManager.state != GameState.playing || game.gameManager.isFrozen) return;
     super.update(dt);
 
     _oscillationTime += dt;

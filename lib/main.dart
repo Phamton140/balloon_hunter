@@ -5,10 +5,13 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'balloon_hunter_game.dart';
+import 'managers/ad_manager.dart';
 import 'components/hud_component.dart';
 import 'models/game_state.dart';
+import 'screens/countdown_screen.dart';
 import 'screens/game_over_screen.dart';
 import 'screens/main_menu_screen.dart';
 import 'screens/pause_screen.dart';
@@ -19,6 +22,7 @@ import 'utils/constants.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AdManager().initialize();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -100,6 +104,7 @@ class _GameScreenState extends State<_GameScreen> {
       GameConstants.overlayGameOver,
       GameConstants.overlayRanking,
       GameConstants.overlaySettings,
+      GameConstants.overlayCountdown,
     ];
 
     switch (state) {
@@ -125,6 +130,9 @@ class _GameScreenState extends State<_GameScreen> {
       case GameState.settings:
         _showOnly(allOverlays, GameConstants.overlaySettings);
         break;
+      case GameState.countdown:
+        _showOnly(allOverlays, GameConstants.overlayCountdown);
+        break;
     }
   }
 
@@ -143,10 +151,13 @@ class _GameScreenState extends State<_GameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: GameWidget<BalloonHunterGame>.controlled(
-        gameFactory: () => _game,
-        overlayBuilderMap: {
+      backgroundColor: const Color(0xFF16213E), // Color oscuro del tema en lugar de negro puro
+      body: Column(
+        children: [
+          Expanded(
+            child: GameWidget<BalloonHunterGame>.controlled(
+              gameFactory: () => _game,
+              overlayBuilderMap: {
         // -- Menú principal --
         GameConstants.overlayMainMenu: (context, game) => MainMenuScreen(
               gameManager: game.gameManager,
@@ -208,6 +219,10 @@ class _GameScreenState extends State<_GameScreen> {
                 await game.gameManager.startNewGame();
                 game.startGame();
               },
+              onRevive: () async {
+                await game.gameManager.reviveLevel();
+                game.startGame();
+              },
               onMenu: () async {
                 await game.gameManager.goToMenu();
                 game.goToMenu();
@@ -229,8 +244,55 @@ class _GameScreenState extends State<_GameScreen> {
               gameManager: game.gameManager,
               onBack: () => game.gameManager.goToMenu(),
             ),
+
+        // -- Countdown --
+        GameConstants.overlayCountdown: (context, game) => CountdownScreen(
+              gameManager: game.gameManager,
+              onCountdownComplete: () {
+                // El countdown finalizó, ahora sí iniciamos a jugar
+                game.gameManager.changeState(GameState.playing);
+              },
+            ),
       },
-      initialActiveOverlays: const [GameConstants.overlayMainMenu],
-    ));
+              initialActiveOverlays: const [GameConstants.overlayMainMenu],
+            ),
+          ),
+          // Banner Ad at the bottom
+          const BannerAdWidget(),
+        ],
+      ),
+    );
+  }
+}
+
+class BannerAdWidget extends StatefulWidget {
+  const BannerAdWidget({super.key});
+
+  @override
+  State<BannerAdWidget> createState() => _BannerAdWidgetState();
+}
+
+class _BannerAdWidgetState extends State<BannerAdWidget> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    AdManager().loadBannerAd(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: AdManager(),
+      builder: (context, child) {
+        if (AdManager().isBannerAdLoaded && AdManager().bannerAd != null) {
+          return Container(
+            width: double.infinity,
+            height: AdManager().bannerAd!.size.height.toDouble(),
+            child: AdWidget(ad: AdManager().bannerAd!),
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    );
   }
 }

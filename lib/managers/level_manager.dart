@@ -46,6 +46,12 @@ class LevelManager extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Resetea solo los globos escapados (para revivir)
+  void resetEscapes() {
+    _escapedBalloons = 0;
+    notifyListeners();
+  }
+
   /// Carga desde un guardado
   void loadFromSave(int level) {
     _currentLevel = level;

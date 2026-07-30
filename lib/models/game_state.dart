@@ -23,4 +23,7 @@ enum GameState {
 
   /// Mostrando los ajustes
   settings,
+
+  /// Cuenta regresiva antes de empezar a jugar
+  countdown,
 }

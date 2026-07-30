@@ -6,12 +6,14 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 import '../models/balloon_type.dart';
+import '../models/game_state.dart';
 import '../utils/constants.dart';
+import '../balloon_hunter_game.dart';
 
 /// Componente de globo especial. Aparece brevemente (2-3s) y desaparece solo.
 /// Azul: activa slow motion. Negro: destruye todos los globos normales.
 /// No usa Object Pool (son muy poco frecuentes).
-class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGameReference {
+class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGameReference<BalloonHunterGame> {
   BalloonType _type = BalloonType.blue;
   BalloonType get specialType => _type;
 
@@ -58,6 +60,7 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
   @override
   void update(double dt) {
     if (!_active) return;
+    if (game.gameManager.state != GameState.playing || game.gameManager.isFrozen) return;
     super.update(dt);
 
     _lifeTimer += dt;

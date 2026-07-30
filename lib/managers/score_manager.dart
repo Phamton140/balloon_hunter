@@ -14,6 +14,7 @@ class ScoreManager extends ChangeNotifier {
   int _balloonsDestroyed = 0;
   int _totalTaps = 0;        // taps sobre cualquier cosa
   int _successfulTaps = 0;   // taps que acertaron un globo
+  int _levelStartScore = 0;  // puntuación al inicio del nivel actual
 
   int get score => _score;
   int get combo => _combo;
@@ -32,6 +33,18 @@ class ScoreManager extends ChangeNotifier {
   double get accuracy {
     if (_totalTaps == 0) return 100.0;
     return (_successfulTaps / _totalTaps * 100).clamp(0.0, 100.0);
+  }
+
+  /// Registra la puntuación actual como el inicio del nivel (para recompensas)
+  void saveLevelStartScore() {
+    _levelStartScore = _score;
+  }
+
+  /// Restaura la puntuación a la que tenía al iniciar el nivel (al revivir)
+  void revertToLevelStartScore() {
+    _score = _levelStartScore;
+    _combo = 0;
+    notifyListeners();
   }
 
   /// Suma puntos al explotar un globo normal.

@@ -33,9 +33,12 @@ class GameManager extends ChangeNotifier {
   final EventManager eventManager;
   final SaveManager saveManager;
 
-  // Estado del juego
+  // -- Estado del Juego --
   GameState _state = GameState.mainMenu;
   GameState get state => _state;
+
+  bool _isFrozen = false;
+  bool get isFrozen => _isFrozen;
   
   /// Indica si hay una partida guardada en disco o en progreso
   bool get hasSavedGame => saveManager.hasSavedGame;
@@ -63,11 +66,12 @@ class GameManager extends ChangeNotifier {
   Future<void> startNewGame() async {
     await saveManager.clearSave();
     scoreManager.reset();
+    scoreManager.saveLevelStartScore(); // Guarda score inicial = 0
     levelManager.reset();
     timerManager.reset();
     timerManager.start();
     _deactivateSlowMotion();
-    changeState(GameState.playing);
+    changeState(GameState.countdown);
     await audioManager.playBgm();
   }
 
@@ -81,12 +85,13 @@ class GameManager extends ChangeNotifier {
     // Carga los datos guardados
     levelManager.loadFromSave(saveManager.savedLevel);
     scoreManager.loadFromSave(saveManager.savedScore);
+    scoreManager.saveLevelStartScore(); // Guarda score inicial = cargado
     
     // Inicia el nivel como nuevo
     timerManager.reset();
     timerManager.start();
     _deactivateSlowMotion();
-    changeState(GameState.playing);
+    changeState(GameState.countdown);
     await audioManager.playBgm();
   }
 
@@ -98,10 +103,11 @@ class GameManager extends ChangeNotifier {
       level: levelManager.currentLevel, 
       score: scoreManager.score,
     );
+    scoreManager.saveLevelStartScore(); // Guarda score inicial para el nuevo nivel
     timerManager.reset();
     timerManager.start();
     _deactivateSlowMotion();
-    changeState(GameState.playing);
+    changeState(GameState.countdown);
   }
 
   /// Pausa el juego
@@ -136,14 +142,38 @@ class GameManager extends ChangeNotifier {
     onLevelComplete?.call();
   }
 
-  /// Llama al producirse un Game Over
+  /// Congela el juego sin cambiar el estado a gameOver (para animaciones)
+  void freezeForGameOver() {
+    _isFrozen = true;
+    timerManager.pause();
+    notifyListeners();
+  }
+
+  /// Dispara el Game Over inmediatamente
   Future<void> triggerGameOver() async {
+    _isFrozen = false;
+    slowMotionActive = false;
     timerManager.pause();
     await _saveScore(); // Guarda en el ranking Top 3
     await saveManager.clearSave(); // Borra el progreso del nivel actual
     changeState(GameState.gameOver);
     await audioManager.stopBgm();
     onGameOver?.call();
+  }
+
+  /// Revive al jugador tras ver un video (reinicia timer y escapes, revierte puntos)
+  Future<void> reviveLevel() async {
+    // Restaurar puntuación inicial del nivel (pierde lo ganado antes de morir)
+    scoreManager.revertToLevelStartScore();
+    // Reiniciar globos escapados
+    levelManager.resetEscapes();
+    // Reiniciar tiempo
+    timerManager.reset();
+    timerManager.start();
+    _deactivateSlowMotion();
+    
+    changeState(GameState.countdown);
+    await audioManager.playBgm();
   }
 
   /// Activa el efecto de slow motion (globo azul)

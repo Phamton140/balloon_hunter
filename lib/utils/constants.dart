@@ -85,5 +85,6 @@ class GameConstants {
   static const String overlayVictory = 'victory';
   static const String overlayRanking = 'ranking';
   static const String overlaySettings = 'settings';
+  static const String overlayCountdown = 'countdown';
   static const String overlayHud = 'hud';
 }
