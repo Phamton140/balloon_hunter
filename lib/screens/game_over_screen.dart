@@ -25,6 +25,9 @@ class GameOverScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Si NO fue por dejar escapar 3 globos, entonces fue por chocar un pájaro.
+    final birdHit = !gameManager.levelManager.isGameOver;
+    
     final score = gameManager.scoreManager.score;
     final level = gameManager.levelManager.currentLevel;
     final accuracy = gameManager.scoreManager.accuracy;
@@ -65,13 +68,11 @@ class GameOverScreen extends StatelessWidget {
                   ),
                 ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(1.3, 1.3)),
 
-                if (birdHit) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    '¡Tocaste un pájaro!',
-                    style: GoogleFonts.fredoka(fontSize: 18, color: Colors.orangeAccent),
-                  ).animate().fadeIn(delay: 300.ms),
-                ],
+                const SizedBox(height: 8),
+                Text(
+                  birdHit ? '¡Tocaste un pájaro!' : '¡Dejaste escapar 3 globos!',
+                  style: GoogleFonts.fredoka(fontSize: 18, color: Colors.orangeAccent),
+                ).animate().fadeIn(delay: 300.ms),
 
                 if (isNewRecord) ...[
                   const SizedBox(height: 8),
@@ -138,10 +139,12 @@ class GameOverScreen extends StatelessWidget {
 
                 // Play again (debajo)
                 _GOButton(
-                  label: '🔄 VOLVER A JUGAR',
+                  label: 'NUEVA PARTIDA',
                   gradient: const LinearGradient(colors: [Palette.menuAccent, Color(0xFFFF6B81)]),
                   onTap: () => onPlayAgain?.call(),
                 ).animate().fadeIn(delay: 800.ms),
+
+                const SizedBox(height: 24), // Espaciado agregado
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

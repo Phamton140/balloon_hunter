@@ -321,7 +321,7 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
     }
   }
 
-  /// Inicia una nueva partida — llamado desde MainMenuScreen
+  /// Inicia una nueva partida — llamado desde las pantallas
   Future<void> startGame() async {
     _gameOverTriggered = false;
     _birdHitGameOver = false;
@@ -331,39 +331,22 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
 
     // Limpiar componentes del juego anterior (no el fondo)
     _clearGameComponents();
-
-    // Actualizar overlays
-    overlays.remove(GameConstants.overlayMainMenu);
-    overlays.remove(GameConstants.overlayGameOver);
-    overlays.remove(GameConstants.overlayVictory);
-    overlays.remove(GameConstants.overlayRanking);
-    overlays.remove(GameConstants.overlaySettings);
-    overlays.add(GameConstants.overlayHud);
   }
 
   /// Pausa el juego
   void pauseGame() {
-    overlays.add(GameConstants.overlayPause);
+    // Overlays are managed by GameManager state in main.dart
   }
 
   /// Reanuda el juego
   void resumeGame() {
-    overlays.remove(GameConstants.overlayPause);
+    // Overlays are managed by GameManager state in main.dart
   }
 
   /// Vuelve al menú
   void goToMenu() {
     _gameOverTriggered = false;
     _clearGameComponents();
-    overlays.removeAll([
-      GameConstants.overlayHud,
-      GameConstants.overlayPause,
-      GameConstants.overlayGameOver,
-      GameConstants.overlayVictory,
-      GameConstants.overlayRanking,
-      GameConstants.overlaySettings,
-    ]);
-    overlays.add(GameConstants.overlayMainMenu);
   }
 
   void _clearGameComponents() {

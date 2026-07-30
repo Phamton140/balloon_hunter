@@ -18,19 +18,37 @@ class CountdownScreen extends StatefulWidget {
   State<CountdownScreen> createState() => _CountdownScreenState();
 }
 
-class _CountdownScreenState extends State<CountdownScreen> {
+class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingObserver {
   Timer? _timer;
   int _countdown = 3;
+  bool _isPaused = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _startTimer();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _isPaused = true;
+    } else if (state == AppLifecycleState.resumed) {
+      _isPaused = false;
+    }
   }
 
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) return;
+      if (!mounted || _isPaused) return;
       if (_countdown > 1) {
         setState(() {
           _countdown--;
@@ -40,12 +58,6 @@ class _CountdownScreenState extends State<CountdownScreen> {
         widget.onCountdownComplete();
       }
     });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
   }
 
   @override
