@@ -106,7 +106,7 @@ class BirdComponent extends PositionComponent
 
     // Verificar si escapó por arriba
     if (position.y < -GameConstants.birdHeight) {
-      _deactivate();
+      disappear();
     }
   }
 
