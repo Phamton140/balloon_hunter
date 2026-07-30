@@ -42,9 +42,8 @@ class BalloonComponent extends PositionComponent
   final Random _random = Random();
 
   BalloonComponent() {
-    // Hitbox expandida para AABB
-    width = GameConstants.balloonWidth + 60.0;
-    height = GameConstants.balloonHeight + 60.0;
+    width = GameConstants.balloonWidth;
+    height = GameConstants.balloonHeight;
     anchor = Anchor.center;
   }
 
@@ -184,7 +183,6 @@ class BalloonComponent extends PositionComponent
   @override
   void onTapDown(TapDownEvent event) {
     if (!_active || _tapped) return;
-    event.handled = true;
     _tapped = true;
     onTapped?.call(this);
   }

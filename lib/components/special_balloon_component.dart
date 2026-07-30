@@ -249,5 +249,14 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
     _active = false;
     removeFromParent();
   }
-
+  @override
+  bool containsLocalPoint(Vector2 point) {
+    if (!_active) return false;
+    // Ampliar el área de detección de toques en 30 píxeles por cada lado
+    final margin = 30.0;
+    return point.x >= -margin &&
+           point.y >= -margin &&
+           point.x <= size.x + margin &&
+           point.y <= size.y + margin;
+  }
 }
