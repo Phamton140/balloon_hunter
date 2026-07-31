@@ -13,8 +13,8 @@ class GameConstants {
   static const double balloonSpeedRed = 180.0;
 
   // -- Globos especiales: velocidades base --
-  static const double balloonSpeedBlue = 100.0;
-  static const double balloonSpeedBlack = 110.0;
+  static const double balloonSpeedBlue = 75.0;
+  static const double balloonSpeedBlack = 85.0;
 
   // -- Variación aleatoria de velocidad ±10% --
   static const double speedVariationMin = 0.90;
@@ -86,5 +86,6 @@ class GameConstants {
   static const String overlayRanking = 'ranking';
   static const String overlaySettings = 'settings';
   static const String overlayCountdown = 'countdown';
+  static const String overlayReviveReady = 'reviveReady';
   static const String overlayHud = 'hud';
 }

@@ -26,4 +26,7 @@ enum GameState {
 
   /// Cuenta regresiva antes de empezar a jugar
   countdown,
+
+  /// Esperando a que el jugador pulse Continuar tras revivir
+  reviveReady,
 }

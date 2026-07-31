@@ -25,8 +25,7 @@ class BirdComponent extends PositionComponent
   bool _tapped = false;
   
   // Parámetros de movimiento errático
-  double _zigZagFreq = 2.5;
-  double _zigZagAmp = 35.0;
+  double _targetX = 0.0;
   double _dashTimer = 0.0;
 
   // Alas animadas
@@ -60,6 +59,7 @@ class BirdComponent extends PositionComponent
     _time = 0.0;
     _wingTime = 0.0;
     _startX = x;
+    _targetX = x;
 
     position.x = x;
     position.y = y;
@@ -69,8 +69,7 @@ class BirdComponent extends PositionComponent
     _speedMultiplier = 1.0;
     
     // Movimiento errático base
-    _zigZagFreq = 1.5 + _random.nextDouble() * 2.0;
-    _zigZagAmp = 30.0 + _random.nextDouble() * 40.0;
+    _targetX = _startX;
     _dashTimer = _random.nextDouble() * 2.0;
   }
 
@@ -91,18 +90,22 @@ class BirdComponent extends PositionComponent
 
     _dashTimer -= dt;
     if (_dashTimer <= 0) {
-      // Cambio de comportamiento errático
+      // Cambio de comportamiento errático suave
       _dashTimer = 1.0 + _random.nextDouble() * 2.0;
-      _zigZagFreq = 1.0 + _random.nextDouble() * 4.0;
-      _zigZagAmp = 20.0 + _random.nextDouble() * 60.0;
-      _baseSpeed = 100.0 + _random.nextDouble() * 200.0;
+      
+      // Elige un nuevo objetivo X dentro de un rango de su posición inicial
+      double offset = (_random.nextDouble() * 2 - 1) * 80.0; // +/- 80px
+      _targetX = _startX + offset;
+      
+      _baseSpeed = 100.0 + _random.nextDouble() * 150.0;
     }
 
     // Ascenso vertical como globo
     position.y -= (_baseSpeed * _speedMultiplier) * dt;
     
-    // Zig-zag horizontal
-    position.x = _startX + sin(_time * _zigZagFreq) * _zigZagAmp;
+    // Movimiento suave hacia el objetivo X
+    double diffX = _targetX - position.x;
+    position.x += diffX * 2.0 * dt; // El factor 2.0 controla qué tan rápido se acerca al objetivo
 
     // Verificar si escapó por arriba
     if (position.y < -GameConstants.birdHeight) {

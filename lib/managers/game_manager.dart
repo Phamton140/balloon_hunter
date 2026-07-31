@@ -167,9 +167,16 @@ class GameManager extends ChangeNotifier {
     levelManager.resetEscapes();
     // Reiniciar tiempo
     timerManager.reset();
-    timerManager.start();
+    
     _deactivateSlowMotion();
     
+    // Cambiar a reviveReady para esperar que el jugador esté listo
+    changeState(GameState.reviveReady);
+  }
+
+  /// Inicia el countdown después de estar en reviveReady
+  Future<void> startReviveCountdown() async {
+    timerManager.start();
     changeState(GameState.countdown);
     await audioManager.playBgm();
   }

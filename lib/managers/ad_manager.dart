@@ -127,6 +127,8 @@ class AdManager extends ChangeNotifier {
       return;
     }
     
+    bool rewardEarned = false;
+
     _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
       onAdShowedFullScreenContent: (ad) => debugPrint('[AdManager] Rewarded ad showed.'),
       onAdDismissedFullScreenContent: (ad) {
@@ -136,6 +138,10 @@ class AdManager extends ChangeNotifier {
         _isRewardedAdLoaded = false;
         loadRewardedAd(); // Cargar otro para el futuro
         notifyListeners();
+        
+        if (rewardEarned) {
+          onRewardEarned();
+        }
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
         debugPrint('[AdManager] Rewarded ad failed to show: $error');
@@ -149,7 +155,7 @@ class AdManager extends ChangeNotifier {
 
     _rewardedAd!.show(onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
       debugPrint('[AdManager] Reward earned: ${reward.amount} ${reward.type}');
-      onRewardEarned();
+      rewardEarned = true;
     });
   }
 

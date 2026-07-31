@@ -18,6 +18,7 @@ import 'screens/pause_screen.dart';
 import 'screens/ranking_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/victory_screen.dart';
+import 'screens/revive_ready_screen.dart';
 import 'utils/constants.dart';
 
 void main() async {
@@ -105,6 +106,7 @@ class _GameScreenState extends State<_GameScreen> {
       GameConstants.overlayRanking,
       GameConstants.overlaySettings,
       GameConstants.overlayCountdown,
+      GameConstants.overlayReviveReady,
     ];
 
     switch (state) {
@@ -132,6 +134,9 @@ class _GameScreenState extends State<_GameScreen> {
         break;
       case GameState.countdown:
         _showOnly(allOverlays, GameConstants.overlayCountdown);
+        break;
+      case GameState.reviveReady:
+        _showOnly(allOverlays, GameConstants.overlayReviveReady);
         break;
     }
   }
@@ -251,6 +256,14 @@ class _GameScreenState extends State<_GameScreen> {
               onCountdownComplete: () {
                 // El countdown finalizó, ahora sí iniciamos a jugar
                 game.gameManager.changeState(GameState.playing);
+              },
+            ),
+
+        // -- Revive Ready --
+        GameConstants.overlayReviveReady: (context, game) => ReviveReadyScreen(
+              gameManager: game.gameManager,
+              onContinue: () {
+                game.gameManager.startReviveCountdown();
               },
             ),
       },
