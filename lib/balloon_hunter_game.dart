@@ -305,7 +305,7 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
     }
     
     // Y limpiar las aves de la pantalla sin sumar puntos
-    spawnManager.removeAllBirds(children.toList());
+    // spawnManager.removeAllBirds(children.toList()); // MODIFICADO: Ahora preserva aves por el medio ambiente
   }
 
   // ==========================================================================

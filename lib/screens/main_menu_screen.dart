@@ -144,15 +144,6 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
                 ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2),
                 
                 const Spacer(flex: 1), // Espacio abajo
-                
-                Text(
-                  'v1.0.0 · Balloon Hunter',
-                  style: GoogleFonts.fredoka(
-                    fontSize: 11,
-                    color: Colors.white30,
-                  ),
-                ),
-                const SizedBox(height: 20),
               ],
             ),
           ],

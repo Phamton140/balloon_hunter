@@ -214,4 +214,9 @@ class BalloonComponent extends PositionComponent
     _speed *= multiplier;
   }
   
+  @override
+  bool containsLocalPoint(Vector2 point) {
+    if (!_active || _tapped) return false;
+    return super.containsLocalPoint(point);
+  }
 }

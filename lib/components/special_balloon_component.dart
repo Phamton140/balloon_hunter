@@ -33,8 +33,8 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
   final Random _random = Random();
 
   SpecialBalloonComponent() {
-    width = (GameConstants.balloonWidth * 1.3) + 60.0; // hitbox expandida
-    height = (GameConstants.balloonHeight * 1.3) + 60.0;
+    width = GameConstants.balloonWidth;
+    height = GameConstants.balloonHeight;
     anchor = Anchor.center;
   }
 
@@ -112,8 +112,8 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
     canvas.drawOval(
       Rect.fromCenter(
         center: Offset.zero,
-        width: GameConstants.balloonWidth * 1.3,
-        height: GameConstants.balloonHeight * 1.1,
+        width: GameConstants.balloonWidth,
+        height: GameConstants.balloonHeight * 0.85,
       ),
       bodyPaint,
     );
@@ -162,8 +162,8 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
     canvas.drawOval(
       Rect.fromCenter(
         center: Offset.zero,
-        width: GameConstants.balloonWidth * 1.3,
-        height: GameConstants.balloonHeight * 1.1,
+        width: GameConstants.balloonWidth,
+        height: GameConstants.balloonHeight * 0.85,
       ),
       bodyPaint,
     );
@@ -251,12 +251,7 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
   }
   @override
   bool containsLocalPoint(Vector2 point) {
-    if (!_active) return false;
-    // Ampliar el área de detección de toques en 30 píxeles por cada lado
-    final margin = 30.0;
-    return point.x >= -margin &&
-           point.y >= -margin &&
-           point.x <= size.x + margin &&
-           point.y <= size.y + margin;
+    if (!_active || _tapped) return false;
+    return super.containsLocalPoint(point);
   }
 }

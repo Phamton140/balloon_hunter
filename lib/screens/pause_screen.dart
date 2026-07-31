@@ -53,7 +53,7 @@ class PauseScreen extends StatelessWidget {
               ListenableBuilder(
                 listenable: gameManager,
                 builder: (context, _) => Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     _AudioToggle(
                       icon: gameManager.audioManager.musicEnabled
@@ -65,16 +65,6 @@ class PauseScreen extends StatelessWidget {
                         await gameManager.audioManager.toggleMusic();
                         // ignore: invalid_use_of_protected_member
                         (gameManager as dynamic).notifyListeners?.call();
-                      },
-                    ),
-                    _AudioToggle(
-                      icon: gameManager.audioManager.sfxEnabled
-                          ? Icons.volume_up
-                          : Icons.volume_off,
-                      label: 'Sonido',
-                      active: gameManager.audioManager.sfxEnabled,
-                      onTap: () {
-                        gameManager.audioManager.toggleSfx();
                       },
                     ),
                   ],

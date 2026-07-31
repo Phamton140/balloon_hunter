@@ -145,7 +145,9 @@ class AudioManager {
   Future<void> setMusicVolume(double volume) async {
     _musicVolume = volume.clamp(0.0, 1.0);
     if (_musicEnabled) {
-      await _bgmPlayer?.setVolume(_musicVolume);
+      // Curva logarítmica/exponencial para mayor sensibilidad en el slider
+      final effectiveVolume = _musicVolume * _musicVolume * _musicVolume;
+      await _bgmPlayer?.setVolume(effectiveVolume);
     }
   }
 
