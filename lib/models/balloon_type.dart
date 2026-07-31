@@ -13,7 +13,6 @@ enum BalloonType {
     color: Palette.balloonYellow,
     glowColor: Palette.balloonYellowGlow,
     particleColor: Palette.particleYellow,
-    assetPath: 'assets/images/balloon_yellow.png',
     isSpecial: false,
   ),
   green(
@@ -22,7 +21,6 @@ enum BalloonType {
     color: Palette.balloonGreen,
     glowColor: Palette.balloonGreenGlow,
     particleColor: Palette.particleGreen,
-    assetPath: 'assets/images/balloon_green.png',
     isSpecial: false,
   ),
   red(
@@ -31,7 +29,6 @@ enum BalloonType {
     color: Palette.balloonRed,
     glowColor: Palette.balloonRedGlow,
     particleColor: Palette.particleRed,
-    assetPath: 'assets/images/balloon_red.png',
     isSpecial: false,
   ),
   blue(
@@ -40,7 +37,6 @@ enum BalloonType {
     color: Palette.balloonBlue,
     glowColor: Palette.balloonBlueGlow,
     particleColor: Palette.particleBlue,
-    assetPath: 'assets/images/balloon_blue.png',
     isSpecial: true,
   ),
   black(
@@ -49,7 +45,6 @@ enum BalloonType {
     color: Palette.balloonBlack,
     glowColor: Palette.balloonBlackGlow,
     particleColor: Palette.particleBlack,
-    assetPath: 'assets/images/balloon_black.png',
     isSpecial: true,
   );
 
@@ -59,7 +54,6 @@ enum BalloonType {
     required this.color,
     required this.glowColor,
     required this.particleColor,
-    required this.assetPath,
     required this.isSpecial,
   });
 
@@ -77,9 +71,6 @@ enum BalloonType {
 
   /// Color de las partículas de explosión
   final Color particleColor;
-
-  /// Ruta al asset de imagen
-  final String assetPath;
 
   /// Si es un globo con poder especial (azul o negro)
   final bool isSpecial;
