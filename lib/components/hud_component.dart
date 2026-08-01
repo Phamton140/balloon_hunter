@@ -87,10 +87,12 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLowTime = remaining <= 10;
-    
+    final topPadding = MediaQuery.of(context).padding.top;
+    // Un padding superior moderado: si hay safe area, se usa pero un poco reducido, si no, 12px.
+    final paddingTop = topPadding > 0 ? topPadding + 4 : 12.0;
+
     return Container(
-      // Padding muy reducido, sin compensar el SafeArea, para que suba hasta el tope real.
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: EdgeInsets.only(top: paddingTop, bottom: 8, left: 14, right: 14),
       decoration: BoxDecoration(
         color: Palette.hudBackground,
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
@@ -111,7 +113,6 @@ class _TopBar extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Fila única combinada para ahorrar máximo espacio (o dos muy compactas)
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -122,14 +123,14 @@ class _TopBar extends StatelessWidget {
                   Text(
                     '🏆 $bestScore',
                     style: GoogleFonts.fredoka(
-                      fontSize: 10,
+                      fontSize: 11,
                       color: Palette.medalGold,
                     ),
                   ),
                   Text(
                     '⭐ $score',
                     style: GoogleFonts.fredoka(
-                      fontSize: 18,
+                      fontSize: 20,
                       color: Palette.hudText,
                       fontWeight: FontWeight.bold,
                     ),
@@ -145,7 +146,7 @@ class _TopBar extends StatelessWidget {
                   Row(
                     children: [
                       if (isSlowMo)
-                        Text('❄ ', style: GoogleFonts.fredoka(fontSize: 12, color: Palette.balloonBlue))
+                        Text('❄ ', style: GoogleFonts.fredoka(fontSize: 13, color: Palette.balloonBlue))
                             .animate(onPlay: (c) => c.repeat())
                             .fadeIn(duration: 500.ms)
                             .then()
@@ -153,26 +154,33 @@ class _TopBar extends StatelessWidget {
                       Text(
                         'NIVEL $level',
                         style: GoogleFonts.fredoka(
-                          fontSize: 14,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Palette.hudAccent,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 2),
-                  // Escapados compactos debajo del nivel
+                  const SizedBox(height: 4),
+                  // Escapados debajo del nivel
                   Row(
                     children: List.generate(GameConstants.maxEscapedBalloons, (i) {
                       final isEscaped = i < escaped;
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 1),
-                        child: Container(
-                          width: 12,
-                          height: 12,
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          width: 14,
+                          height: 14,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: isEscaped ? Palette.hudDanger : Colors.white24,
+                          ),
+                          child: Center(
+                            child: Text(
+                              isEscaped ? '💨' : '',
+                              style: const TextStyle(fontSize: 10),
+                            ),
                           ),
                         ),
                       );
@@ -188,24 +196,35 @@ class _TopBar extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   if (combo >= GameConstants.comboThreshold1)
-                    Text(
-                      'x${combo >= GameConstants.comboThreshold3 ? '3.0' : combo >= GameConstants.comboThreshold2 ? '2.0' : '1.5'}',
-                      style: GoogleFonts.fredoka(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFFFFD600),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF6B35), Color(0xFFFFD600)],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '💥 x${combo >= GameConstants.comboThreshold3 ? '3.0' : combo >= GameConstants.comboThreshold2 ? '2.0' : '1.5'}',
+                        style: GoogleFonts.fredoka(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ).animate(onPlay: (c) => c.repeat(reverse: true))
-                        .scale(begin: const Offset(1.0, 1.0), end: const Offset(1.1, 1.1), duration: 600.ms)
+                        .scale(begin: const Offset(1.0, 1.0), end: const Offset(1.08, 1.08), duration: 600.ms)
                   else
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 18), // Espacio vacío para mantener la alineación
+
+                  const SizedBox(height: 4),
 
                   Row(
                     children: [
                       AnimatedDefaultTextStyle(
                         duration: const Duration(milliseconds: 300),
                         style: GoogleFonts.fredoka(
-                          fontSize: isLowTime ? 20 : 18,
+                          fontSize: isLowTime ? 22 : 20,
                           fontWeight: FontWeight.bold,
                           color: isLowTime ? Palette.hudDanger : Palette.hudText,
                         ),
@@ -218,7 +237,14 @@ class _TopBar extends StatelessWidget {
 
                       GestureDetector(
                         onTap: onPause,
-                        child: const Icon(Icons.pause_circle_filled, color: Colors.white70, size: 24),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.pause, color: Colors.white, size: 22),
+                        ),
                       ),
                     ],
                   ),
