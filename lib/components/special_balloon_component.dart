@@ -115,17 +115,17 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
       height: bodyHeight
     );
 
-    // Azul más intenso para contrastar fuertemente con el cielo
+    // Azul vibrante pero manteniendo el tono hielo (celeste intenso)
     canvas.drawOval(
       rect,
       Paint()
-        ..color = const Color(0xFF0D6EFD).withOpacity(0.9 * alpha) // Azul fuerte vibrante
+        ..color = const Color(0xFF29B6F6).withOpacity(0.9 * alpha) // Celeste hielo brillante
         ..style = PaintingStyle.fill,
     );
     canvas.drawOval(
       rect,
       Paint()
-        ..color = const Color(0xFF084298).withOpacity(alpha) // Borde azul oscuro
+        ..color = const Color(0xFF0277BD).withOpacity(alpha) // Borde azul claro
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2,
     );
