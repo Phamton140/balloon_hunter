@@ -39,29 +39,22 @@ class HudOverlay extends StatelessWidget {
         final remaining = gameManager.timerManager.remaining;
         final isSlowMo = gameManager.slowMotionActive;
 
-        return SafeArea(
-          child: Column(
-            children: [
-              // -- Barra superior --
-              _TopBar(
-                score: score,
-                level: level,
-                bestScore: bestScore,
-                timeStr: timeStr,
-                remaining: remaining,
-                isSlowMo: isSlowMo,
-                onPause: onPause,
-              ),
-
-              const Spacer(),
-
-              // -- Barra inferior (escapados + combo) --
-              _BottomBar(
-                escaped: escaped,
-                combo: combo,
-              ),
-            ],
-          ),
+        return Column(
+          children: [
+            // -- Barra superior (Unificada) --
+            _TopBar(
+              score: score,
+              level: level,
+              bestScore: bestScore,
+              timeStr: timeStr,
+              remaining: remaining,
+              isSlowMo: isSlowMo,
+              escaped: escaped,
+              combo: combo,
+              onPause: onPause,
+            ),
+            const Spacer(),
+          ],
         );
       },
     );
@@ -75,6 +68,8 @@ class _TopBar extends StatelessWidget {
   final String timeStr;
   final double remaining;
   final bool isSlowMo;
+  final int escaped;
+  final int combo;
   final VoidCallback onPause;
 
   const _TopBar({
@@ -84,21 +79,33 @@ class _TopBar extends StatelessWidget {
     required this.timeStr,
     required this.remaining,
     required this.isSlowMo,
+    required this.escaped,
+    required this.combo,
     required this.onPause,
   });
 
   @override
   Widget build(BuildContext context) {
     final isLowTime = remaining <= 10;
+    // SafeArea padding
+    final topPadding = MediaQuery.of(context).padding.top;
+    
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      // Sin margen arriba, usando el padding para el SafeArea
+      padding: EdgeInsets.only(
+        top: topPadding > 0 ? topPadding + 8 : 12, 
+        bottom: 12, 
+        left: 16, 
+        right: 16
+      ),
       decoration: BoxDecoration(
         color: Palette.hudBackground,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isSlowMo ? Palette.balloonBlue.withOpacity(0.6) : Colors.white.withOpacity(0.1),
-          width: isSlowMo ? 2 : 1,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+        border: Border(
+          bottom: BorderSide(
+            color: isSlowMo ? Palette.balloonBlue.withOpacity(0.6) : Colors.white.withOpacity(0.1),
+            width: isSlowMo ? 2 : 1,
+          )
         ),
         boxShadow: [
           BoxShadow(
@@ -108,159 +115,156 @@ class _TopBar extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Mejor score
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '🏆 $bestScore',
-                style: GoogleFonts.fredoka(
-                  fontSize: 11,
-                  color: Palette.medalGold,
-                ),
-              ),
-              Text(
-                '⭐ $score',
-                style: GoogleFonts.fredoka(
-                  fontSize: 22,
-                  color: Palette.hudText,
-                ),
-              ),
-            ],
-          ),
-
-          const Spacer(),
-
-          // Nivel y slow mo
-          Column(
-            children: [
-              if (isSlowMo)
-                Text('❄ SLOW', style: GoogleFonts.fredoka(fontSize: 11, color: Palette.balloonBlue))
-                    .animate(onPlay: (c) => c.repeat())
-                    .fadeIn(duration: 500.ms)
-                    .then()
-                    .fadeOut(duration: 500.ms),
-              Text(
-                'NIVEL $level',
-                style: GoogleFonts.fredoka(
-                  fontSize: 16,
-                  color: Palette.hudAccent,
-                ),
-              ),
-            ],
-          ),
-
-          const Spacer(),
-
-          // Timer + Pausa
+          // Fila 1: Stats principales
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 300),
-                style: GoogleFonts.fredoka(
-                  fontSize: isLowTime ? 24 : 20,
-                  color: isLowTime ? Palette.hudDanger : Palette.hudText,
-                ),
-                child: Text('⏱ $timeStr'),
-              ).animate(
-                target: isLowTime ? 1 : 0,
-              ).shake(hz: 3, duration: 500.ms),
-
-              const SizedBox(width: 8),
-
-              GestureDetector(
-                onTap: onPause,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
+              // Score
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '🏆 $bestScore',
+                    style: GoogleFonts.fredoka(
+                      fontSize: 11,
+                      color: Palette.medalGold,
+                    ),
                   ),
-                  child: const Icon(Icons.pause, color: Colors.white, size: 18),
-                ),
+                  Text(
+                    '⭐ $score',
+                    style: GoogleFonts.fredoka(
+                      fontSize: 22,
+                      color: Palette.hudText,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
+              
+              const Spacer(),
 
-class _BottomBar extends StatelessWidget {
-  final int escaped;
-  final int combo;
-
-  const _BottomBar({required this.escaped, required this.combo});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0), // Sin espacio abajo (justo sobre el banner)
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Palette.hudBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Globos escapados
-          Row(
-            children: [
-              Text(
-                'Escapados: ',
-                style: GoogleFonts.fredoka(
-                  fontSize: 13,
-                  color: Palette.hudText.withOpacity(0.7),
-                ),
+              // Nivel y slow mo
+              Column(
+                children: [
+                  if (isSlowMo)
+                    Text('❄ SLOW', style: GoogleFonts.fredoka(fontSize: 11, color: Palette.balloonBlue))
+                        .animate(onPlay: (c) => c.repeat())
+                        .fadeIn(duration: 500.ms)
+                        .then()
+                        .fadeOut(duration: 500.ms),
+                  Text(
+                    'NIVEL $level',
+                    style: GoogleFonts.fredoka(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Palette.hudAccent,
+                    ),
+                  ),
+                ],
               ),
-              ...List.generate(GameConstants.maxEscapedBalloons, (i) {
-                final isEscaped = i < escaped;
-                return Padding(
-                  padding: const EdgeInsets.only(left: 2),
-                  child: AnimatedContainer(
+
+              const Spacer(),
+
+              // Timer + Pausa
+              Row(
+                children: [
+                  AnimatedDefaultTextStyle(
                     duration: const Duration(milliseconds: 300),
-                    width: 18,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isEscaped ? Palette.hudDanger : Colors.white24,
+                    style: GoogleFonts.fredoka(
+                      fontSize: isLowTime ? 24 : 20,
+                      fontWeight: FontWeight.bold,
+                      color: isLowTime ? Palette.hudDanger : Palette.hudText,
                     ),
-                    child: Center(
-                      child: Text(
-                        isEscaped ? '💨' : '○',
-                        style: const TextStyle(fontSize: 10),
+                    child: Text('⏱ $timeStr'),
+                  ).animate(
+                    target: isLowTime ? 1 : 0,
+                  ).shake(hz: 3, duration: 500.ms),
+
+                  const SizedBox(width: 12),
+
+                  GestureDetector(
+                    onTap: onPause,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.15),
+                        shape: BoxShape.circle,
                       ),
+                      child: const Icon(Icons.pause, color: Colors.white, size: 20),
                     ),
                   ),
-                );
-              }),
+                ],
+              ),
             ],
           ),
+          
+          const SizedBox(height: 12),
+          
+          // Fila 2: Escapados y Combo
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Globos escapados
+              Row(
+                children: [
+                  Text(
+                    'Escapados: ',
+                    style: GoogleFonts.fredoka(
+                      fontSize: 13,
+                      color: Palette.hudText.withOpacity(0.8),
+                    ),
+                  ),
+                  ...List.generate(GameConstants.maxEscapedBalloons, (i) {
+                    final isEscaped = i < escaped;
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isEscaped ? Palette.hudDanger : Colors.white24,
+                        ),
+                        child: Center(
+                          child: Text(
+                            isEscaped ? '💨' : '',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
 
-          // Combo activo
-          if (combo >= GameConstants.comboThreshold1)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFF6B35), Color(0xFFFFD600)],
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '💥 COMBO x${combo >= GameConstants.comboThreshold3 ? '3.0' : combo >= GameConstants.comboThreshold2 ? '2.0' : '1.5'}',
-                style: GoogleFonts.fredoka(
-                  fontSize: 14,
-                  color: Colors.white,
-                ),
-              ),
-            ).animate(onPlay: (c) => c.repeat(reverse: true))
-                .scale(begin: const Offset(1.0, 1.0), end: const Offset(1.08, 1.08), duration: 600.ms),
+              // Combo
+              if (combo >= GameConstants.comboThreshold1)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF6B35), Color(0xFFFFD600)],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '💥 COMBO x${combo >= GameConstants.comboThreshold3 ? '3.0' : combo >= GameConstants.comboThreshold2 ? '2.0' : '1.5'}',
+                    style: GoogleFonts.fredoka(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ).animate(onPlay: (c) => c.repeat(reverse: true))
+                    .scale(begin: const Offset(1.0, 1.0), end: const Offset(1.08, 1.08), duration: 600.ms)
+              else
+                const SizedBox(height: 24), // Para mantener la altura cuando no hay combo
+            ],
+          ),
         ],
       ),
     );

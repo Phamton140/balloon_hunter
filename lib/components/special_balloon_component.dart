@@ -74,8 +74,8 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
     // Ligero balanceo horizontal
     position.x += sin(_pulseTime * 2.0) * 30.0 * dt;
 
-    // Desaparece al salir por arriba
-    if (position.y < -GameConstants.balloonHeight) {
+    // Desaparece al entrar por completo al menú superior
+    if (position.y + (GameConstants.balloonHeight / 2) < GameConstants.hudHeight) {
       _disappear();
     }
   }

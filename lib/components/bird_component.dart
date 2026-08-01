@@ -107,8 +107,8 @@ class BirdComponent extends PositionComponent
     double diffX = _targetX - position.x;
     position.x += diffX * 2.0 * dt; // El factor 2.0 controla qué tan rápido se acerca al objetivo
 
-    // Verificar si escapó por arriba
-    if (position.y < -GameConstants.birdHeight) {
+    // Verificar si escapó por arriba (al entrar al menú superior)
+    if (position.y + (GameConstants.birdHeight / 2) < GameConstants.hudHeight) {
       disappear();
     }
   }

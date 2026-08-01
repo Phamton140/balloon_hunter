@@ -100,8 +100,8 @@ class BalloonComponent extends PositionComponent
     // Ascenso vertical
     position.y -= _speed * dt;
 
-    // Verificar si escapó por la parte superior
-    if (position.y < -GameConstants.balloonHeight) {
+    // Verificar si escapó por la parte superior (cuando entra por completo al HUD)
+    if (position.y + (GameConstants.balloonHeight / 2) < GameConstants.hudHeight) {
       _onEscaped();
     }
   }
