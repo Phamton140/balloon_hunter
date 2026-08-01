@@ -87,11 +87,8 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
     canvas.save();
     canvas.translate(size.x / 2, size.y / 2);
     
-    // Escalamos el canvas para que coincida con las proporciones del diseño JS (110x150)
-    // respecto a las dimensiones actuales del componente.
-    final scaleX = size.x / 110.0;
-    final scaleY = size.y / 150.0;
-    canvas.scale(scaleX * _scaleAnim, scaleY * _scaleAnim);
+    // Solo aplicamos la animación de pulso, no distorsionamos las proporciones X/Y
+    canvas.scale(_scaleAnim);
 
     final alpha = 1.0;
 
@@ -105,43 +102,54 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
   }
 
   void _renderBlueBalloon(Canvas canvas, double alpha) {
-    final rx = 55.0;
-    final ry = 75.0;
+    // Para que las proporciones sean uniformes a los PNG:
+    // El cuerpo ocupa el ancho total (size.x) y un 82% del alto (size.y)
+    final bodyWidth = size.x;
+    final bodyHeight = size.y * 0.82;
+    // Ajustamos el centro un poco hacia arriba para dejar espacio al nudo
+    final bodyCenterY = -size.y * 0.05;
+    
+    final rect = Rect.fromCenter(
+      center: Offset(0, bodyCenterY), 
+      width: bodyWidth, 
+      height: bodyHeight
+    );
 
-    // Cuerpo del globo Helado
-    final rect = Rect.fromCenter(center: Offset.zero, width: rx * 2, height: ry * 2);
+    // Azul más intenso para contrastar fuertemente con el cielo
     canvas.drawOval(
       rect,
       Paint()
-        ..color = const Color(0xFFB4EBFF).withOpacity(0.75 * alpha)
+        ..color = const Color(0xFF0D6EFD).withOpacity(0.9 * alpha) // Azul fuerte vibrante
         ..style = PaintingStyle.fill,
     );
     canvas.drawOval(
       rect,
       Paint()
-        ..color = const Color(0xFFA6E3E9).withOpacity(alpha)
+        ..color = const Color(0xFF084298).withOpacity(alpha) // Borde azul oscuro
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 3,
+        ..strokeWidth = 2,
     );
 
-    // Copo de Nieve Central
+    // Copo de Nieve Central (Blanco/Celeste para resaltar en el fondo oscuro)
     final flakePaint = Paint()
-      ..color = const Color(0xFF4682B4).withOpacity(alpha)
+      ..color = const Color(0xFFE0F7FA).withOpacity(0.9 * alpha)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.5
+      ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round;
 
+    final flakeY = bodyCenterY;
     for (int i = 0; i < 3; i++) {
       canvas.save();
+      canvas.translate(0, flakeY);
       canvas.rotate((i * pi) / 3);
       
       final path = Path();
       // Línea principal
-      path.moveTo(-22, 0);
-      path.lineTo(22, 0);
+      path.moveTo(-14, 0);
+      path.lineTo(14, 0);
       // Ramas
-      path.moveTo(-12, -8); path.lineTo(-6, 0); path.lineTo(-12, 8);
-      path.moveTo(12, -8);  path.lineTo(6, 0);  path.lineTo(12, 8);
+      path.moveTo(-8, -5); path.lineTo(-4, 0); path.lineTo(-8, 5);
+      path.moveTo(8, -5);  path.lineTo(4, 0);  path.lineTo(8, 5);
       
       canvas.drawPath(path, flakePaint);
       canvas.restore();
@@ -149,47 +157,48 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
 
     // Reflejo cristalino
     canvas.save();
-    canvas.translate(-25, -30);
+    canvas.translate(-size.x * 0.25, bodyCenterY - size.y * 0.2);
     canvas.rotate(-pi / 6);
     canvas.drawOval(
-      Rect.fromCenter(center: Offset.zero, width: 20, height: 44),
-      Paint()..color = Colors.white.withOpacity(0.45 * alpha),
+      Rect.fromCenter(center: Offset.zero, width: size.x * 0.15, height: size.y * 0.3),
+      Paint()..color = Colors.white.withOpacity(0.4 * alpha),
     );
     canvas.restore();
 
-    // Nudo helado
-    final knotY = ry;
+    // Nudo
+    final knotY = bodyCenterY + (bodyHeight / 2);
     final knotPath = Path()
-      ..moveTo(-8, knotY + 6)
-      ..lineTo(8, knotY + 6)
+      ..moveTo(-5, knotY + 5)
+      ..lineTo(5, knotY + 5)
       ..lineTo(0, knotY)
       ..close();
-    canvas.drawPath(knotPath, Paint()..color = const Color(0xFF71C7EC).withOpacity(alpha));
+    canvas.drawPath(knotPath, Paint()..color = const Color(0xFF084298).withOpacity(alpha));
 
-    // Hilo Blanco/Helado animado
+    // Hilo animado
     final stringPath = Path()
-      ..moveTo(0, knotY + 3)
-      ..quadraticBezierTo(sin(_pulseTime * 2) * 15, knotY + 30, -sin(_pulseTime * 2) * 5, knotY + 60);
+      ..moveTo(0, knotY + 2)
+      ..quadraticBezierTo(sin(_pulseTime * 2) * 10, knotY + 15, -sin(_pulseTime * 2) * 5, knotY + 35);
     
     canvas.drawPath(
       stringPath,
       Paint()
-        ..color = Colors.white.withOpacity(alpha)
+        ..color = Colors.white.withOpacity(0.8 * alpha)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
+        ..strokeWidth = 1.5,
     );
   }
 
   void _renderBlackBalloon(Canvas canvas, double alpha) {
-    final rx = 55.0;
-    final ry = 75.0;
+    final bodyWidth = size.x;
+    final bodyHeight = size.y * 0.82;
+    final bodyCenterY = -size.y * 0.05;
 
     // CAPA 1: Cuerpo del Globo Negro
-    final rect = Rect.fromCenter(center: Offset.zero, width: rx * 2, height: ry * 2);
+    final rect = Rect.fromCenter(center: Offset(0, bodyCenterY), width: bodyWidth, height: bodyHeight);
     canvas.drawOval(
       rect,
       Paint()
-        ..color = const Color(0xFF141821).withOpacity(0.85 * alpha)
+        ..color = const Color(0xFF141821).withOpacity(0.9 * alpha)
         ..style = PaintingStyle.fill,
     );
     canvas.drawOval(
@@ -197,78 +206,78 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
       Paint()
         ..color = const Color(0xFF3A4454).withOpacity(alpha)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 3,
+        ..strokeWidth = 2,
     );
 
     // CAPA 2: Bomba Clásica en el Interior
-    final bombY = 10.0;
-    final bombRadius = 32.0;
+    final bombY = bodyCenterY + 4.0;
+    final bombRadius = size.x * 0.3;
 
     // Esfera de la bomba
     canvas.drawCircle(Offset(0, bombY), bombRadius, Paint()..color = const Color(0xFF111111).withOpacity(alpha));
 
     // Cuello metálico
     canvas.drawRect(
-      Rect.fromLTWH(-10, bombY - bombRadius - 8, 20, 8),
+      Rect.fromLTWH(-6, bombY - bombRadius - 6, 12, 6),
       Paint()..color = const Color(0xFF555555).withOpacity(alpha),
     );
 
     // Brillo 3D en la bomba
-    canvas.drawCircle(Offset(-10, bombY - 10), 8, Paint()..color = Colors.white.withOpacity(0.25 * alpha));
+    canvas.drawCircle(Offset(-6, bombY - 6), 5, Paint()..color = Colors.white.withOpacity(0.25 * alpha));
 
     // Mecha saliendo de la bomba
     final fusePath = Path()
-      ..moveTo(0, bombY - bombRadius - 8)
-      ..quadraticBezierTo(5, bombY - bombRadius - 20, 12, bombY - bombRadius - 25);
+      ..moveTo(0, bombY - bombRadius - 6)
+      ..quadraticBezierTo(3, bombY - bombRadius - 12, 8, bombY - bombRadius - 16);
     canvas.drawPath(
       fusePath,
       Paint()
         ..color = const Color(0xFFD9A752).withOpacity(alpha)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 3,
+        ..strokeWidth = 2,
     );
 
-    // Chispa encendida
-    canvas.drawCircle(Offset(12, bombY - bombRadius - 25), 5, Paint()..color = const Color(0xFFFF9900).withOpacity(alpha));
+    // Chispa encendida de la bomba interior
+    canvas.drawCircle(Offset(8, bombY - bombRadius - 16), 3, Paint()..color = const Color(0xFFFF9900).withOpacity(alpha));
 
     // Brillo exterior del globo (reflejo sutil)
     canvas.save();
-    canvas.translate(-25, -30);
+    canvas.translate(-size.x * 0.25, bodyCenterY - size.y * 0.2);
     canvas.rotate(-pi / 6);
     canvas.drawOval(
-      Rect.fromCenter(center: Offset.zero, width: 20, height: 40),
+      Rect.fromCenter(center: Offset.zero, width: size.x * 0.15, height: size.y * 0.25),
       Paint()..color = Colors.white.withOpacity(0.15 * alpha),
     );
     canvas.restore();
 
     // Nudo del globo
-    final knotY = ry;
+    final knotY = bodyCenterY + (bodyHeight / 2);
     final knotPath = Path()
-      ..moveTo(-8, knotY + 6)
-      ..lineTo(8, knotY + 6)
+      ..moveTo(-5, knotY + 5)
+      ..lineTo(5, knotY + 5)
       ..lineTo(0, knotY)
       ..close();
     canvas.drawPath(knotPath, Paint()..color = const Color(0xFF141821).withOpacity(alpha));
 
     // CAPA 3: Hilo actuando como Mecha Principal animado
     final stringEndX = -sin(_pulseTime * 2) * 5;
-    final stringEndY = knotY + 60.0;
+    final stringEndY = knotY + 35.0;
     
     final stringPath = Path()
-      ..moveTo(0, knotY + 3)
-      ..quadraticBezierTo(sin(_pulseTime * 2) * 15, knotY + 30, stringEndX, stringEndY);
+      ..moveTo(0, knotY + 2)
+      ..quadraticBezierTo(sin(_pulseTime * 2) * 10, knotY + 15, stringEndX, stringEndY);
       
     canvas.drawPath(
       stringPath,
       Paint()
         ..color = const Color(0xFFF5C542).withOpacity(alpha)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5,
+        ..strokeWidth = 2.0,
     );
 
     // Chispa en la punta del hilo
-    canvas.drawCircle(Offset(stringEndX, stringEndY), 7, Paint()..color = const Color(0xFFFF4500).withOpacity(alpha));
-    canvas.drawCircle(Offset(stringEndX, stringEndY), 3.5, Paint()..color = const Color(0xFFFFEA00).withOpacity(alpha));
+    canvas.drawCircle(Offset(stringEndX, stringEndY), 4.5, Paint()..color = const Color(0xFFFF4500).withOpacity(alpha));
+    canvas.drawCircle(Offset(stringEndX, stringEndY), 2.5, Paint()..color = const Color(0xFFFFEA00).withOpacity(alpha));
   }
 
   @override
