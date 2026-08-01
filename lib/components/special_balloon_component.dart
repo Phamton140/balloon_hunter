@@ -86,7 +86,12 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
 
     canvas.save();
     canvas.translate(size.x / 2, size.y / 2);
-    canvas.scale(_scaleAnim);
+    
+    // Escalamos el canvas para que coincida con las proporciones del diseño JS (110x150)
+    // respecto a las dimensiones actuales del componente.
+    final scaleX = size.x / 110.0;
+    final scaleY = size.y / 150.0;
+    canvas.scale(scaleX * _scaleAnim, scaleY * _scaleAnim);
 
     final alpha = 1.0;
 
@@ -100,139 +105,170 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
   }
 
   void _renderBlueBalloon(Canvas canvas, double alpha) {
-    // Aura de hielo
-    final auraPaint = Paint()
-      ..color = const Color(0xFF00B4D8).withOpacity(0.3 * alpha)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
-    canvas.drawCircle(Offset.zero, 55, auraPaint);
+    final rx = 55.0;
+    final ry = 75.0;
 
-    // Cuerpo
-    final bodyPaint = Paint()
-      ..color = const Color(0xFF00B4D8).withOpacity(alpha);
+    // Cuerpo del globo Helado
+    final rect = Rect.fromCenter(center: Offset.zero, width: rx * 2, height: ry * 2);
     canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset.zero,
-        width: GameConstants.balloonWidth,
-        height: GameConstants.balloonHeight * 0.85,
-      ),
-      bodyPaint,
+      rect,
+      Paint()
+        ..color = const Color(0xFFB4EBFF).withOpacity(0.75 * alpha)
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawOval(
+      rect,
+      Paint()
+        ..color = const Color(0xFFA6E3E9).withOpacity(alpha)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3,
     );
 
-    // Cristales de hielo
-    final crystalPaint = Paint()
-      ..color = Colors.white.withOpacity(0.6 * alpha)
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-    for (int i = 0; i < 6; i++) {
-      final angle = i * pi / 3;
-      canvas.drawLine(
-        Offset.zero,
-        Offset(cos(angle) * 20, sin(angle) * 20),
-        crystalPaint,
-      );
+    // Copo de Nieve Central
+    final flakePaint = Paint()
+      ..color = const Color(0xFF4682B4).withOpacity(alpha)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.5
+      ..strokeCap = StrokeCap.round;
+
+    for (int i = 0; i < 3; i++) {
+      canvas.save();
+      canvas.rotate((i * pi) / 3);
+      
+      final path = Path();
+      // Línea principal
+      path.moveTo(-22, 0);
+      path.lineTo(22, 0);
+      // Ramas
+      path.moveTo(-12, -8); path.lineTo(-6, 0); path.lineTo(-12, 8);
+      path.moveTo(12, -8);  path.lineTo(6, 0);  path.lineTo(12, 8);
+      
+      canvas.drawPath(path, flakePaint);
+      canvas.restore();
     }
 
-    // Brillo
+    // Reflejo cristalino
+    canvas.save();
+    canvas.translate(-25, -30);
+    canvas.rotate(-pi / 6);
     canvas.drawOval(
-      Rect.fromCenter(
-        center: const Offset(-10, -14),
-        width: 16,
-        height: 22,
-      ),
-      Paint()..color = Colors.white.withOpacity(0.5 * alpha),
+      Rect.fromCenter(center: Offset.zero, width: 20, height: 44),
+      Paint()..color = Colors.white.withOpacity(0.45 * alpha),
     );
+    canvas.restore();
 
-    // Label
-    _drawLabel(canvas, '❄', alpha);
+    // Nudo helado
+    final knotY = ry;
+    final knotPath = Path()
+      ..moveTo(-8, knotY + 6)
+      ..lineTo(8, knotY + 6)
+      ..lineTo(0, knotY)
+      ..close();
+    canvas.drawPath(knotPath, Paint()..color = const Color(0xFF71C7EC).withOpacity(alpha));
 
-    // Hilo y nudo
-    _drawString(canvas, const Color(0xFF00B4D8).withOpacity(alpha));
+    // Hilo Blanco/Helado animado
+    final stringPath = Path()
+      ..moveTo(0, knotY + 3)
+      ..quadraticBezierTo(sin(_pulseTime * 2) * 15, knotY + 30, -sin(_pulseTime * 2) * 5, knotY + 60);
+    
+    canvas.drawPath(
+      stringPath,
+      Paint()
+        ..color = Colors.white.withOpacity(alpha)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
   }
 
   void _renderBlackBalloon(Canvas canvas, double alpha) {
-    // Aura púrpura
-    final auraPaint = Paint()
-      ..color = const Color(0xFF9B59B6).withOpacity(0.5 * alpha)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
-    canvas.drawCircle(Offset.zero, 60, auraPaint);
+    final rx = 55.0;
+    final ry = 75.0;
 
-    // Cuerpo negro
-    final bodyPaint = Paint()
-      ..color = const Color(0xFF1A0A2E).withOpacity(alpha);
+    // CAPA 1: Cuerpo del Globo Negro
+    final rect = Rect.fromCenter(center: Offset.zero, width: rx * 2, height: ry * 2);
     canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset.zero,
-        width: GameConstants.balloonWidth,
-        height: GameConstants.balloonHeight * 0.85,
-      ),
-      bodyPaint,
+      rect,
+      Paint()
+        ..color = const Color(0xFF141821).withOpacity(0.85 * alpha)
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawOval(
+      rect,
+      Paint()
+        ..color = const Color(0xFF3A4454).withOpacity(alpha)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3,
     );
 
-    // Espiral mágica
-    final spiralPaint = Paint()
-      ..color = const Color(0xFF9B59B6).withOpacity(0.7 * alpha)
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-    final path = Path();
-    for (double t = 0; t < 4 * pi; t += 0.1) {
-      final r = t * 4;
-      final x = cos(t) * r;
-      final y = sin(t) * r;
-      if (t == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    canvas.drawPath(path, spiralPaint);
+    // CAPA 2: Bomba Clásica en el Interior
+    final bombY = 10.0;
+    final bombRadius = 32.0;
 
-    // Brillo
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: const Offset(-10, -14),
-        width: 14,
-        height: 20,
-      ),
-      Paint()..color = Colors.white.withOpacity(0.3 * alpha),
+    // Esfera de la bomba
+    canvas.drawCircle(Offset(0, bombY), bombRadius, Paint()..color = const Color(0xFF111111).withOpacity(alpha));
+
+    // Cuello metálico
+    canvas.drawRect(
+      Rect.fromLTWH(-10, bombY - bombRadius - 8, 20, 8),
+      Paint()..color = const Color(0xFF555555).withOpacity(alpha),
     );
 
-    // Label
-    _drawLabel(canvas, '💥', alpha);
+    // Brillo 3D en la bomba
+    canvas.drawCircle(Offset(-10, bombY - 10), 8, Paint()..color = Colors.white.withOpacity(0.25 * alpha));
 
-    // Hilo y nudo
-    _drawString(canvas, const Color(0xFF1A0A2E).withOpacity(alpha));
-  }
+    // Mecha saliendo de la bomba
+    final fusePath = Path()
+      ..moveTo(0, bombY - bombRadius - 8)
+      ..quadraticBezierTo(5, bombY - bombRadius - 20, 12, bombY - bombRadius - 25);
+    canvas.drawPath(
+      fusePath,
+      Paint()
+        ..color = const Color(0xFFD9A752).withOpacity(alpha)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3,
+    );
 
-  void _drawString(Canvas canvas, Color knotColor) {
-    final knotY = GameConstants.balloonHeight * 0.55;
+    // Chispa encendida
+    canvas.drawCircle(Offset(12, bombY - bombRadius - 25), 5, Paint()..color = const Color(0xFFFF9900).withOpacity(alpha));
+
+    // Brillo exterior del globo (reflejo sutil)
+    canvas.save();
+    canvas.translate(-25, -30);
+    canvas.rotate(-pi / 6);
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset.zero, width: 20, height: 40),
+      Paint()..color = Colors.white.withOpacity(0.15 * alpha),
+    );
+    canvas.restore();
+
+    // Nudo del globo
+    final knotY = ry;
+    final knotPath = Path()
+      ..moveTo(-8, knotY + 6)
+      ..lineTo(8, knotY + 6)
+      ..lineTo(0, knotY)
+      ..close();
+    canvas.drawPath(knotPath, Paint()..color = const Color(0xFF141821).withOpacity(alpha));
+
+    // CAPA 3: Hilo actuando como Mecha Principal animado
+    final stringEndX = -sin(_pulseTime * 2) * 5;
+    final stringEndY = knotY + 60.0;
     
-    // Nudo
-    canvas.drawCircle(Offset(0, knotY), 5, Paint()..color = knotColor);
-
-    // Hilo
-    final stringPaint = Paint()
-      ..color = Colors.white.withOpacity(0.4)
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-
-    final stringPath = Path();
-    stringPath.moveTo(0, knotY + 2);
-    stringPath.quadraticBezierTo(
-      sin(_pulseTime * 2) * 12, knotY + 15,
-      -sin(_pulseTime * 2) * 8, knotY + 30
+    final stringPath = Path()
+      ..moveTo(0, knotY + 3)
+      ..quadraticBezierTo(sin(_pulseTime * 2) * 15, knotY + 30, stringEndX, stringEndY);
+      
+    canvas.drawPath(
+      stringPath,
+      Paint()
+        ..color = const Color(0xFFF5C542).withOpacity(alpha)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5,
     );
-    canvas.drawPath(stringPath, stringPaint);
-  }
 
-  void _drawLabel(Canvas canvas, String emoji, double alpha) {
-    final tp = TextPainter(
-      text: TextSpan(
-        text: emoji,
-        style: TextStyle(fontSize: 22, color: Colors.white.withOpacity(alpha)),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    tp.paint(canvas, Offset(-tp.width / 2, tp.height * 0.8));
+    // Chispa en la punta del hilo
+    canvas.drawCircle(Offset(stringEndX, stringEndY), 7, Paint()..color = const Color(0xFFFF4500).withOpacity(alpha));
+    canvas.drawCircle(Offset(stringEndX, stringEndY), 3.5, Paint()..color = const Color(0xFFFFEA00).withOpacity(alpha));
   }
 
   @override
