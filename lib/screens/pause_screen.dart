@@ -49,40 +49,15 @@ class PauseScreen extends StatelessWidget {
               Container(height: 1, color: Colors.white12),
               const SizedBox(height: 24),
 
-              // Controles de audio
-              ListenableBuilder(
-                listenable: gameManager,
-                builder: (context, _) => Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _AudioToggle(
-                      icon: gameManager.audioManager.musicEnabled
-                          ? Icons.music_note
-                          : Icons.music_off,
-                      label: 'Música',
-                      active: gameManager.audioManager.musicEnabled,
-                      onTap: () async {
-                        await gameManager.audioManager.toggleMusic();
-                        // ignore: invalid_use_of_protected_member
-                        (gameManager as dynamic).notifyListeners?.call();
-                      },
-                    ),
-                  ],
-                ),
-              ),
-
-              // Control de Volumen de Música
+              // Control de Volumen General
               ListenableBuilder(
                 listenable: gameManager,
                 builder: (context, _) {
-                  if (!gameManager.audioManager.musicEnabled) {
-                    return const SizedBox.shrink();
-                  }
                   return Column(
                     children: [
                       const SizedBox(height: 16),
                       Text(
-                        'Volumen',
+                        'Volumen (${(gameManager.audioManager.masterVolume * 100).round()}%)',
                         style: GoogleFonts.fredoka(fontSize: 14, color: Colors.white70),
                       ),
                       SliderTheme(
@@ -94,11 +69,11 @@ class PauseScreen extends StatelessWidget {
                           trackHeight: 4,
                         ),
                         child: Slider(
-                          value: gameManager.audioManager.musicVolume,
+                          value: gameManager.audioManager.masterVolume,
                           min: 0.0,
                           max: 1.0,
                           onChanged: (value) async {
-                            await gameManager.audioManager.setMusicVolume(value);
+                            await gameManager.audioManager.setMasterVolume(value);
                             // ignore: invalid_use_of_protected_member
                             (gameManager as dynamic).notifyListeners?.call();
                           },

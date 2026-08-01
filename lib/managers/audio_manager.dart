@@ -7,12 +7,9 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 
 /// Gestiona toda la reproducción de audio del juego.
-/// Maneja música de fondo, efectos de sonido por tipo de globo y vibración.
+/// Maneja música de fondo, efectos de sonido por tipo de globo y vibración con un control de volumen maestro.
 class AudioManager {
-  bool _musicEnabled = true;
-  bool _sfxEnabled = true;
-  double _musicVolume = 0.6;
-  double _sfxVolume = 1.0;
+  double _masterVolume = 0.6; // Valor inicial
 
   // -- Playlist --
   final List<String> _playlist = ['bgm1.mp3', 'bgm2.mp3', 'bgm3.mp3'];
@@ -21,10 +18,7 @@ class AudioManager {
   StreamSubscription? _playerCompleteSubscription;
   final Map<String, AudioPool> _sfxPools = {};
 
-  bool get musicEnabled => _musicEnabled;
-  bool get sfxEnabled => _sfxEnabled;
-  double get musicVolume => _musicVolume;
-  double get sfxVolume => _sfxVolume;
+  double get masterVolume => _masterVolume;
 
   /// Precarga todos los assets de audio para evitar latencia en el juego
   Future<void> initialize() async {
@@ -52,7 +46,7 @@ class AudioManager {
 
   /// Reproduce la música de fondo actual
   Future<void> playBgm() async {
-    if (!_musicEnabled) return;
+    if (_masterVolume <= 0) return;
     try {
       if (_bgmPlayer == null) {
         _bgmPlayer = AudioPlayer();
@@ -60,8 +54,8 @@ class AudioManager {
           _playNextSong();
         });
       }
-      await _bgmPlayer!.setVolume(_musicVolume);
-      // FlameAudio cachea en la ruta de assets/audio. Audioplayers usa AssetSource
+      final effectiveVolume = _masterVolume * _masterVolume;
+      await _bgmPlayer!.setVolume(effectiveVolume);
       await _bgmPlayer!.play(AssetSource('audio/${_playlist[_currentSongIndex]}'));
     } catch (e) {
       debugPrint('[AudioManager] BGM error: $e');
@@ -84,7 +78,7 @@ class AudioManager {
 
   /// Reanuda la música de fondo
   Future<void> resumeBgm() async {
-    if (!_musicEnabled) return;
+    if (_masterVolume <= 0) return;
     try {
       if (_bgmPlayer?.state == PlayerState.paused) {
         await _bgmPlayer?.resume();
@@ -126,28 +120,19 @@ class AudioManager {
   /// Sonido de subida de nivel
   Future<void> playLevelUp() async => _playSfx('level_up.mp3');
 
-  /// Activa/desactiva la música
-  Future<void> toggleMusic() async {
-    _musicEnabled = !_musicEnabled;
-    if (_musicEnabled) {
-      await playBgm();
+  /// Ajusta el volumen general del juego (0.0 - 1.0)
+  Future<void> setMasterVolume(double volume) async {
+    _masterVolume = volume.clamp(0.0, 1.0);
+    final effectiveVolume = _masterVolume * _masterVolume;
+    
+    if (_masterVolume > 0) {
+      if (_bgmPlayer?.state == PlayerState.playing) {
+        await _bgmPlayer?.setVolume(effectiveVolume);
+      } else {
+        await playBgm();
+      }
     } else {
       await stopBgm();
-    }
-  }
-
-  /// Activa/desactiva los efectos de sonido
-  void toggleSfx() {
-    _sfxEnabled = !_sfxEnabled;
-  }
-
-  /// Ajusta el volumen de la música (0.0 - 1.0)
-  Future<void> setMusicVolume(double volume) async {
-    _musicVolume = volume.clamp(0.0, 1.0);
-    if (_musicEnabled) {
-      // Curva logarítmica/exponencial para mayor sensibilidad en el slider
-      final effectiveVolume = _musicVolume * _musicVolume * _musicVolume;
-      await _bgmPlayer?.setVolume(effectiveVolume);
     }
   }
 
@@ -168,12 +153,14 @@ class AudioManager {
   // -- Privado --
 
   Future<void> _playSfx(String filename) async {
-    if (!_sfxEnabled) return;
+    if (_masterVolume <= 0) return;
     try {
+      // Usamos volumen exponencial/logarítmico para mejor percepción
+      final effectiveVolume = _masterVolume * _masterVolume;
       if (_sfxPools.containsKey(filename)) {
-        await _sfxPools[filename]!.start(volume: _sfxVolume);
+        await _sfxPools[filename]!.start(volume: effectiveVolume);
       } else {
-        await FlameAudio.play(filename, volume: _sfxVolume);
+        await FlameAudio.play(filename, volume: effectiveVolume);
       }
     } catch (e) {
       debugPrint('[AudioManager] SFX error ($filename): $e');

@@ -61,54 +61,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 12),
 
                   _SettingCard(
-                    icon: Icons.music_note,
-                    title: 'Música de fondo',
-                    subtitle: audio.musicEnabled ? 'Activada' : 'Desactivada',
-                    trailing: Switch(
-                      value: audio.musicEnabled,
-                      activeColor: const Color(0xFF43E97B),
-                      onChanged: (_) async {
-                        await audio.toggleMusic();
-                        setState(() {});
-                      },
-                    ),
-                  ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.2),
-
-                  const SizedBox(height: 12),
-
-                  _SettingCard(
                     icon: Icons.volume_up,
-                    title: 'Efectos de sonido',
-                    subtitle: audio.sfxEnabled ? 'Activados' : 'Desactivados',
-                    trailing: Switch(
-                      value: audio.sfxEnabled,
-                      activeColor: const Color(0xFF43E97B),
-                      onChanged: (_) {
-                        audio.toggleSfx();
-                        setState(() {});
-                      },
-                    ),
-                  ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.2),
-
-                  const SizedBox(height: 12),
-
-                  _SettingCard(
-                    icon: Icons.music_video,
-                    title: 'Volumen de música',
-                    subtitle: '${(audio.musicVolume * 100).round()}%',
+                    title: 'Volumen General',
+                    subtitle: '${(audio.masterVolume * 100).round()}%',
                     trailing: const SizedBox.shrink(),
                     bottom: Slider(
-                      value: audio.musicVolume,
+                      value: audio.masterVolume,
                       min: 0.0,
                       max: 1.0,
                       activeColor: const Color(0xFF43E97B),
                       inactiveColor: Colors.white24,
                       onChanged: (v) async {
-                        await audio.setMusicVolume(v);
+                        await audio.setMasterVolume(v);
                         setState(() {});
                       },
                     ),
-                  ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.2),
+                  ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.2),
                 ],
               ),
             ),
