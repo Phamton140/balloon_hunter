@@ -196,8 +196,12 @@ class _TopBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (combo >= GameConstants.comboThreshold1)
-                  Container(
+                Visibility(
+                  visible: combo >= GameConstants.comboThreshold1,
+                  maintainSize: true,
+                  maintainAnimation: true,
+                  maintainState: true,
+                  child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
@@ -215,9 +219,8 @@ class _TopBar extends StatelessWidget {
                     ),
                   ).animate(onPlay: (c) => c.repeat())
                       // Shimmer en lugar de Scale para evitar mover el layout
-                      .shimmer(duration: 1000.ms, color: Colors.white54)
-                else
-                  const SizedBox(height: 20), // Espacio vacío para mantener la alineación
+                      .shimmer(duration: 1000.ms, color: Colors.white54),
+                ),
 
                 const SizedBox(height: 4),
 
