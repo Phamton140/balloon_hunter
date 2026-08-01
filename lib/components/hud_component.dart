@@ -108,165 +108,151 @@ class _TopBar extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          // Score & Best (Izquierda)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '🏆 $bestScore',
+                  style: GoogleFonts.fredoka(
+                    fontSize: 12,
+                    color: Palette.medalGold,
+                  ),
+                ),
+                Text(
+                  '⭐ $score',
+                  style: GoogleFonts.fredoka(
+                    fontSize: 22,
+                    color: Palette.hudText,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Nivel y Escapados (Centro)
+          Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Score & Best (Izquierda - Ancho fijo proporcional para evitar saltos)
-              Expanded(
-                flex: 1,
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '🏆 $bestScore',
-                        style: GoogleFonts.fredoka(
-                          fontSize: 12,
-                          color: Palette.medalGold,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isSlowMo)
+                    Text('❄ ', style: GoogleFonts.fredoka(fontSize: 14, color: Palette.balloonBlue))
+                        .animate(onPlay: (c) => c.repeat())
+                        .fadeIn(duration: 500.ms)
+                        .then()
+                        .fadeOut(duration: 500.ms),
+                  Text(
+                    'NIVEL $level',
+                    style: GoogleFonts.fredoka(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Palette.hudAccent,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              // Escapados debajo del nivel
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(GameConstants.maxEscapedBalloons, (i) {
+                  final isEscaped = i < escaped;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isEscaped ? Palette.hudDanger : Colors.white24,
+                      ),
+                      child: Center(
+                        child: Text(
+                          isEscaped ? '💨' : '',
+                          style: const TextStyle(fontSize: 11),
                         ),
                       ),
-                      Text(
-                        '⭐ $score',
-                        style: GoogleFonts.fredoka(
-                          fontSize: 22,
-                          color: Palette.hudText,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Nivel y Escapados (Centro)
-              Expanded(
-                flex: 1,
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (isSlowMo)
-                            Text('❄ ', style: GoogleFonts.fredoka(fontSize: 14, color: Palette.balloonBlue))
-                                .animate(onPlay: (c) => c.repeat())
-                                .fadeIn(duration: 500.ms)
-                                .then()
-                                .fadeOut(duration: 500.ms),
-                          Text(
-                            'NIVEL $level',
-                            style: GoogleFonts.fredoka(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Palette.hudAccent,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      // Escapados debajo del nivel
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: List.generate(GameConstants.maxEscapedBalloons, (i) {
-                          final isEscaped = i < escaped;
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 2),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              width: 16,
-                              height: 16,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isEscaped ? Palette.hudDanger : Colors.white24,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  isEscaped ? '💨' : '',
-                                  style: const TextStyle(fontSize: 11),
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Combo, Timer & Pausa (Derecha)
-              Expanded(
-                flex: 1,
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      if (combo >= GameConstants.comboThreshold1)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFF6B35), Color(0xFFFFD600)],
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            '💥 x${combo >= GameConstants.comboThreshold3 ? '3.0' : combo >= GameConstants.comboThreshold2 ? '2.0' : '1.5'}',
-                            style: GoogleFonts.fredoka(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ).animate(onPlay: (c) => c.repeat())
-                            // Shimmer en lugar de Scale para evitar mover el layout
-                            .shimmer(duration: 1000.ms, color: Colors.white54)
-                      else
-                        const SizedBox(height: 20), // Espacio vacío para mantener la alineación
-
-                      const SizedBox(height: 4),
-
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          AnimatedDefaultTextStyle(
-                            duration: const Duration(milliseconds: 300),
-                            style: GoogleFonts.fredoka(
-                              fontSize: isLowTime ? 24 : 22,
-                              fontWeight: FontWeight.bold,
-                              color: isLowTime ? Palette.hudDanger : Palette.hudText,
-                            ),
-                            child: Text('⏱ $timeStr'),
-                          ).animate(
-                            target: isLowTime ? 1 : 0,
-                          ).shake(hz: 3, duration: 500.ms),
-                          
-                          const SizedBox(width: 8),
-
-                          GestureDetector(
-                            onTap: onPause,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.pause, color: Colors.white, size: 24),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                }),
               ),
             ],
+          ),
+
+          // Combo, Timer & Pausa (Derecha)
+          Align(
+            alignment: Alignment.centerRight,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (combo >= GameConstants.comboThreshold1)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFF6B35), Color(0xFFFFD600)],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '💥 x${combo >= GameConstants.comboThreshold3 ? '3.0' : combo >= GameConstants.comboThreshold2 ? '2.0' : '1.5'}',
+                      style: GoogleFonts.fredoka(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ).animate(onPlay: (c) => c.repeat())
+                      // Shimmer en lugar de Scale para evitar mover el layout
+                      .shimmer(duration: 1000.ms, color: Colors.white54)
+                else
+                  const SizedBox(height: 20), // Espacio vacío para mantener la alineación
+
+                const SizedBox(height: 4),
+
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 300),
+                      style: GoogleFonts.fredoka(
+                        fontSize: isLowTime ? 24 : 22,
+                        fontWeight: FontWeight.bold,
+                        color: isLowTime ? Palette.hudDanger : Palette.hudText,
+                      ),
+                      child: Text('⏱ $timeStr'),
+                    ).animate(
+                      target: isLowTime ? 1 : 0,
+                    ).shake(hz: 3, duration: 500.ms),
+                    
+                    const SizedBox(width: 8),
+
+                    GestureDetector(
+                      onTap: onPause,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.pause, color: Colors.white, size: 24),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
