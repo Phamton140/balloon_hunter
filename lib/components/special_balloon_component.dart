@@ -52,8 +52,8 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
     _pulseTime = 0.0;
     _scaleAnim = 1.0;
     
-    // Alta velocidad para globos especiales
-    _speed = 300.0 + _random.nextDouble() * 100.0;
+    // Velocidad más amigable para que el usuario pueda identificarlos y tocarlos
+    _speed = 180.0 + _random.nextDouble() * 50.0;
     position.x = x;
     position.y = y;
   }
