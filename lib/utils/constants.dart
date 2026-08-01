@@ -40,7 +40,7 @@ class GameConstants {
   static const double levelDuration = 60.0;
 
   // -- Interfaz de Usuario --
-  static const double hudHeight = 110.0; // Altura aproximada del HUD superior
+  static const double hudHeight = 50.0; // Altura del HUD superior ultra-compacto
 
   // -- Globos escapados para Game Over --
   static const int maxEscapedBalloons = 3;
