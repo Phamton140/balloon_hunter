@@ -43,13 +43,13 @@ class BackgroundComponent extends PositionComponent with HasGameReference {
     }
 
     // Generar nubes decorativas animadas
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 5; i++) {
       _clouds.add(_Cloud(
         x: _random.nextDouble() * game.size.x,
-        y: _random.nextDouble() * game.size.y * 0.5,
-        scale: 0.5 + _random.nextDouble() * 0.8,
-        speed: 15.0 + _random.nextDouble() * 20.0,
-        opacity: 0.4 + _random.nextDouble() * 0.5,
+        y: _random.nextDouble() * game.size.y * 0.25, // Más altas (top 25% de la pantalla)
+        scale: 0.5 + _random.nextDouble() * 0.6,
+        speed: 3.0 + _random.nextDouble() * 5.0, // Mucho más lentas
+        opacity: 0.15 + _random.nextDouble() * 0.2, // Más tenues y realistas
       ));
     }
   }
@@ -153,18 +153,31 @@ class BackgroundComponent extends PositionComponent with HasGameReference {
 
   void _drawCloud(Canvas canvas, _Cloud cloud) {
     // Si es de noche, oscurecemos un poco las nubes
-    final baseColor = _currentCategory == TimeOfDayCategory.night ? Colors.blueGrey : Colors.white;
+    final baseColor = _currentCategory == TimeOfDayCategory.night ? const Color(0xFF546E7A) : Colors.white;
     final paint = Paint()
       ..color = baseColor.withOpacity(cloud.opacity);
 
     final cx = cloud.x;
     final cy = cloud.y;
-    final s = cloud.scale * 40;
+    final s = cloud.scale * 60; // Base size multiplier
 
-    canvas.drawCircle(Offset(cx, cy), s, paint);
-    canvas.drawCircle(Offset(cx + s * 0.8, cy + s * 0.2), s * 0.75, paint);
-    canvas.drawCircle(Offset(cx - s * 0.6, cy + s * 0.2), s * 0.6, paint);
-    canvas.drawCircle(Offset(cx + s * 0.3, cy - s * 0.4), s * 0.5, paint);
+    // Nube realista: base plana y protuberancias (fluffy) arriba
+    final path = Path();
+    
+    // Base plana alargada con bordes redondos
+    final baseRect = RRect.fromLTRBR(
+      cx - s * 0.8, cy, 
+      cx + s * 1.4, cy + s * 0.4, 
+      Radius.circular(s * 0.2)
+    );
+    path.addRRect(baseRect);
+    
+    // Esponjosidad superior
+    path.addOval(Rect.fromCircle(center: Offset(cx - s * 0.3, cy), radius: s * 0.4));
+    path.addOval(Rect.fromCircle(center: Offset(cx + s * 0.4, cy - s * 0.2), radius: s * 0.55));
+    path.addOval(Rect.fromCircle(center: Offset(cx + s * 0.9, cy + s * 0.1), radius: s * 0.3));
+
+    canvas.drawPath(path, paint);
   }
 }
 

@@ -12,7 +12,8 @@ foreach ($f in $files) {
     if (Test-Path $src) {
         $img = [System.Drawing.Image]::FromFile($src)
         [int]$w = $img.Width
-        [int]$h = $img.Height - 60
+        # Crop 250 pixels from the bottom to aggressively remove any watermark
+        [int]$h = $img.Height - 250
         $rect = New-Object System.Drawing.Rectangle(0, 0, $w, $h)
         $bmp = New-Object System.Drawing.Bitmap($w, $h)
         $g = [System.Drawing.Graphics]::FromImage($bmp)
@@ -21,7 +22,7 @@ foreach ($f in $files) {
         $g.Dispose()
         $bmp.Dispose()
         $img.Dispose()
-        Write-Host "Cropped $f -> $dest"
+        Write-Host "Aggressively cropped $f -> $dest"
     } else {
         Write-Host "File $src not found!"
     }
