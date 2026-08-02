@@ -229,11 +229,6 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     debugPrint('[GameManager] Black balloon activated');
   }
 
-  /// Prueba manual de cambio de fondo
-  void triggerDebugCycleTheme() {
-    eventManager.trigger(GameEventType.debugCycleTheme);
-  }
-
   /// Actualiza el timer del slow motion. Llamar desde game loop.
   void update(double dt) {
     if (slowMotionActive) {

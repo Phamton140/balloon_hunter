@@ -25,11 +25,7 @@ class BackgroundComponent extends PositionComponent with HasGameReference {
   double _fadeTimer = 0.0;
   static const double _fadeDuration = 3.0; // 3 segundos de transición suave
   double _checkTimeTimer = 0.0;
-  
-  // Flag de debug
-  bool _isDebugOverride = false;
-  bool _isDebugAutoCycle = false;
-  double _debugAutoCycleTimer = 0.0;
+
 
   @override
   Future<void> onLoad() async {
@@ -101,35 +97,7 @@ class BackgroundComponent extends PositionComponent with HasGameReference {
     return _themeSprites[themeIndex][category.index];
   }
   
-  /// Cicla manualmente el fondo (para modo de prueba de usuario).
-  void debugCycleTheme() {
-    if (!_spritesLoaded) return;
-    
-    _isDebugOverride = true;
-    _previousCategory = _currentCategory;
-    _previousThemeIndex = _currentThemeIndex;
-    _fadeTimer = 0.0;
-    
-    // Ciclar horario (Mañana -> Tarde -> Noche)
-    if (_currentCategory == TimeOfDayCategory.morning) {
-      _currentCategory = TimeOfDayCategory.afternoon;
-    } else if (_currentCategory == TimeOfDayCategory.afternoon) {
-      _currentCategory = TimeOfDayCategory.night;
-    } else {
-      _currentCategory = TimeOfDayCategory.morning;
-      // Si completó el ciclo del día, cambiar al siguiente tema
-      _currentThemeIndex = (_currentThemeIndex + 1) % 3;
-    }
-  }
 
-  /// Activa/desactiva la galería de pruebas automáticas
-  void toggleDebugAutoCycle() {
-    _isDebugAutoCycle = !_isDebugAutoCycle;
-    if (_isDebugAutoCycle) {
-      _debugAutoCycleTimer = 0.0;
-      debugCycleTheme(); // Hace el primer cambio inmediatamente
-    }
-  }
 
   @override
   void update(double dt) {
@@ -154,27 +122,19 @@ class BackgroundComponent extends PositionComponent with HasGameReference {
       }
     }
 
-    if (_isDebugAutoCycle) {
-      _debugAutoCycleTimer += dt;
-      if (_debugAutoCycleTimer >= 5.0) {
-        _debugAutoCycleTimer = 0.0;
-        debugCycleTheme();
-      }
-    } else if (!_isDebugOverride) {
-      _checkTimeTimer += dt;
-      if (_checkTimeTimer >= 5.0) {
-        _checkTimeTimer = 0.0;
-        final actualCategory = _getTimeOfDayCategory();
-        final actualTheme = _getThemeForToday();
+    _checkTimeTimer += dt;
+    if (_checkTimeTimer >= 5.0) {
+      _checkTimeTimer = 0.0;
+      final actualCategory = _getTimeOfDayCategory();
+      final actualTheme = _getThemeForToday();
+      
+      if (actualCategory != _currentCategory || actualTheme != _currentThemeIndex) {
+        _previousCategory = _currentCategory;
+        _previousThemeIndex = _currentThemeIndex;
         
-        if (actualCategory != _currentCategory || actualTheme != _currentThemeIndex) {
-          _previousCategory = _currentCategory;
-          _previousThemeIndex = _currentThemeIndex;
-          
-          _currentCategory = actualCategory;
-          _currentThemeIndex = actualTheme;
-          _fadeTimer = 0.0;
-        }
+        _currentCategory = actualCategory;
+        _currentThemeIndex = actualTheme;
+        _fadeTimer = 0.0;
       }
     }
   }
