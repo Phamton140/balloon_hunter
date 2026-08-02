@@ -285,7 +285,7 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
     
     // Debug de fondos
     eventManager.register(GameEventType.debugCycleTheme, (event) {
-      background.debugCycleTheme();
+      background.toggleDebugAutoCycle();
     });
   }
 

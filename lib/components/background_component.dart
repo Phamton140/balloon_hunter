@@ -28,6 +28,8 @@ class BackgroundComponent extends PositionComponent with HasGameReference {
   
   // Flag de debug
   bool _isDebugOverride = false;
+  bool _isDebugAutoCycle = false;
+  double _debugAutoCycleTimer = 0.0;
 
   @override
   Future<void> onLoad() async {
@@ -120,6 +122,15 @@ class BackgroundComponent extends PositionComponent with HasGameReference {
     }
   }
 
+  /// Activa/desactiva la galería de pruebas automáticas
+  void toggleDebugAutoCycle() {
+    _isDebugAutoCycle = !_isDebugAutoCycle;
+    if (_isDebugAutoCycle) {
+      _debugAutoCycleTimer = 0.0;
+      debugCycleTheme(); // Hace el primer cambio inmediatamente
+    }
+  }
+
   @override
   void update(double dt) {
     super.update(dt);
@@ -143,7 +154,13 @@ class BackgroundComponent extends PositionComponent with HasGameReference {
       }
     }
 
-    if (!_isDebugOverride) {
+    if (_isDebugAutoCycle) {
+      _debugAutoCycleTimer += dt;
+      if (_debugAutoCycleTimer >= 5.0) {
+        _debugAutoCycleTimer = 0.0;
+        debugCycleTheme();
+      }
+    } else if (!_isDebugOverride) {
       _checkTimeTimer += dt;
       if (_checkTimeTimer >= 5.0) {
         _checkTimeTimer = 0.0;
