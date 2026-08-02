@@ -42,6 +42,7 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
   final SpawnManager spawnManager = SpawnManager();
   final SaveManager saveManager = SaveManager();
   late final GameManager gameManager;
+  late final BackgroundComponent background;
 
   // -- Estado de spawn --
   double _spawnTimer = 0.0;
@@ -86,7 +87,8 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
     _setupEventHandlers();
 
     // 6. Añadir fondo
-    add(BackgroundComponent());
+    background = BackgroundComponent();
+    add(background);
 
     // 7. Mostrar menú principal
     overlays.add(GameConstants.overlayMainMenu);
@@ -279,6 +281,11 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
     // Globo negro
     eventManager.register(GameEventType.blackBalloonExplosion, (event) {
       // La lógica real se maneja en _onBlackBalloonActivated
+    });
+    
+    // Debug de fondos
+    eventManager.register(GameEventType.debugCycleTheme, (event) {
+      background.debugCycleTheme();
     });
   }
 

@@ -22,6 +22,9 @@ enum GameEventType {
   /// Explosión masiva (globo negro activado)
   blackBalloonExplosion,
 
+  /// Ciclo de temas de depuración para probar fondos
+  debugCycleTheme,
+
   // ============================================================
   // Eventos futuros (no implementados en v1.0):
   // ============================================================

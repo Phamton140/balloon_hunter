@@ -146,6 +146,19 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
                 const Spacer(flex: 1), // Espacio abajo
               ],
             ),
+            
+            // Botón temporal de debug para probar fondos
+            Positioned(
+              top: 16,
+              right: 16,
+              child: FloatingActionButton.small(
+                backgroundColor: Colors.white24,
+                onPressed: () {
+                  widget.gameManager.triggerDebugCycleTheme();
+                },
+                child: const Icon(Icons.color_lens, color: Colors.white),
+              ),
+            ),
           ],
         ),
       ),
