@@ -2,6 +2,7 @@
 // Estado global y coordinación central del juego
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import '../models/game_state.dart';
 import '../models/game_event.dart';
 import 'audio_manager.dart';
@@ -14,7 +15,7 @@ import 'save_manager.dart';
 
 /// Gestor central que coordina todos los subsistemas del juego.
 /// Mantiene el estado global y la lógica de transición entre pantallas.
-class GameManager extends ChangeNotifier {
+class GameManager extends ChangeNotifier with WidgetsBindingObserver {
   GameManager({
     required this.audioManager,
     required this.scoreManager,
@@ -23,7 +24,36 @@ class GameManager extends ChangeNotifier {
     required this.rankingManager,
     required this.eventManager,
     required this.saveManager,
-  });
+  }) {
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || 
+        state == AppLifecycleState.inactive || 
+        state == AppLifecycleState.hidden) {
+      
+      // El usuario salió de la app o recibió una llamada
+      audioManager.pauseBgm();
+      
+      if (_state == GameState.playing) {
+        pauseGame(); // Pausa automáticamente el juego para que no pierda
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      // El usuario volvió a la app
+      // Solo reanudamos la música si estamos en el menú o si el juego no está en una pantalla donde debería estar silenciado
+      if (_state == GameState.mainMenu || _state == GameState.countdown || _state == GameState.playing) {
+        audioManager.resumeBgm();
+      }
+    }
+  }
 
   final AudioManager audioManager;
   final ScoreManager scoreManager;
