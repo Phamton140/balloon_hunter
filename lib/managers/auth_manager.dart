@@ -62,7 +62,8 @@ class AuthManager extends ChangeNotifier {
 
   /// Actualizar el perfil del jugador
   Future<void> updateProfile(String name, String countryCode) async {
-    _playerName = name;
+    final cleanName = name.trim();
+    _playerName = cleanName.length > 13 ? cleanName.substring(0, 13) : cleanName;
     _playerCountryCode = countryCode;
     await _saveManager?.saveProfile(name: name, countryCode: countryCode);
     notifyListeners();

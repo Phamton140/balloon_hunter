@@ -209,12 +209,14 @@ class _ProfileCardState extends State<_ProfileCard> {
             children: [
               TextField(
                 controller: nameCtrl,
+                maxLength: 13,
                 style: GoogleFonts.fredoka(color: Colors.white),
                 decoration: InputDecoration(
                   labelText: 'Nombre de Usuario',
                   labelStyle: const TextStyle(color: Colors.white54),
                   enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
                   focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+                  counterStyle: const TextStyle(color: Colors.white54),
                 ),
               ),
               const SizedBox(height: 16),

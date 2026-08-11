@@ -76,7 +76,11 @@ class RankingScreen extends StatelessWidget {
               // Tab Views
               Expanded(
                 child: AnimatedBuilder(
-                  animation: gameManager.authManager,
+                  animation: Listenable.merge([
+                    gameManager.authManager,
+                    gameManager.rankingManager,
+                    gameManager.friendsManager,
+                  ]),
                   builder: (context, _) {
                     final isLoggedIn = gameManager.authManager.isLoggedIn;
                     return TabBarView(
@@ -248,11 +252,14 @@ class RankingScreen extends StatelessWidget {
     return Column(
       children: [
         const SizedBox(height: 20),
-        if (type == 'amigos') _buildFriendsHeader(context),
-        if (type != 'amigos') ...[
-          Text(headerEmoji, style: const TextStyle(fontSize: 40)),
-          const SizedBox(height: 10),
-          Text(headerText, style: GoogleFonts.fredoka(fontSize: 20, color: Colors.white)),
+        Text(headerEmoji, style: const TextStyle(fontSize: 40)),
+        const SizedBox(height: 10),
+        Text(headerText, style: GoogleFonts.fredoka(fontSize: 20, color: Colors.white)),
+        if (type == 'amigos') ...[
+          const SizedBox(height: 8),
+          Text('Tu código: ${gameManager.friendsManager.myFriendCode}', style: GoogleFonts.fredoka(fontSize: 14, color: const Color(0xFF43E97B))),
+          const SizedBox(height: 16),
+          _buildFriendsHeader(context),
         ],
         const SizedBox(height: 20),
         _buildTableHeader(showCountry: true),
@@ -280,9 +287,7 @@ class RankingScreen extends StatelessWidget {
   }
 
   Widget _buildFriendsHeader(BuildContext context) {
-    return Column(
-      children: [
-        GestureDetector(
+    return GestureDetector(
           onTap: () => _showAddFriendCodeDialog(context),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -302,9 +307,7 @@ class RankingScreen extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ],
-    );
+        );
   }
 
   void _showAddFriendCodeDialog(BuildContext context) {
