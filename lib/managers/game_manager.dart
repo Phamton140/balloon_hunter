@@ -170,8 +170,10 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
   /// Borra todo el progreso del juego (local y nube) para realizar pruebas,
   /// manteniendo la sesión del usuario intacta.
   Future<void> wipeGameData() async {
+    debugPrint('[GameManager] Iniciando wipeGameData...');
     // 1. Borrar progreso local (nivel, max score, etc)
     await saveManager.wipeProgress();
+    debugPrint('[GameManager] wipeProgress local completado.');
     
     // 2. Restablecer gestores en memoria
     levelManager.reset();
@@ -180,10 +182,12 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     // 3. Borrar de la base de datos (leaderboard) y reiniciar nube
     if (authManager.isLoggedIn) {
       try {
+        debugPrint('[GameManager] Intentando borrar leaderboard para ${authManager.playerId}...');
         await FirebaseFirestore.instance
             .collection('leaderboard')
             .doc(authManager.playerId)
             .delete();
+        debugPrint('[GameManager] Leaderboard doc eliminado.');
         await cloudSyncManager.syncMaxLevel(1);
       } catch (e) {
         debugPrint('[GameManager] Error wiping cloud data: $e');
@@ -191,8 +195,11 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     }
     
     // 4. Refrescar UI
+    debugPrint('[GameManager] Limpiando RankingManager local...');
     rankingManager.clearLocalRecord();
+    debugPrint('[GameManager] Fetching global ranking...');
     await rankingManager.fetchGlobalRanking();
+    debugPrint('[GameManager] wipeGameData completado.');
     notifyListeners();
   }
 

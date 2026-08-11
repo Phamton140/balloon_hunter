@@ -25,9 +25,9 @@ class RankingManager extends ChangeNotifier {
       cacheSizeBytes: 104857600, // Límite de 100 MB para evitar saturar el teléfono
     );
     
-    // Iniciar sesión silenciosa en Google Play Games
+    // Iniciar sesión silenciosa en Google Play Games con timeout para evitar cuelgues
     try {
-      await GamesServices.signIn();
+      await GamesServices.signIn().timeout(const Duration(seconds: 5));
     } catch (e) {
       debugPrint('[RankingManager] Error auto-signin Play Games: $e');
     }
@@ -39,7 +39,7 @@ class RankingManager extends ChangeNotifier {
       if (await GamesServices.isSignedIn) {
         final dynamic pScore = await GamesServices.getPlayerScore(
           androidLeaderboardID: GameConstants.leaderboardGlobalId,
-        );
+        ).timeout(const Duration(seconds: 5));
         
         int playGamesScore = 0;
         if (pScore is int) {
@@ -113,6 +113,7 @@ class RankingManager extends ChangeNotifier {
           }
         } else {
           _personalBestRecord = null;
+          _globalScores.removeWhere((s) => s['playerId'] == _authManager.playerId);
         }
       }
     } catch (e) {
@@ -146,6 +147,7 @@ class RankingManager extends ChangeNotifier {
               }
             } else {
               _personalBestRecord = null;
+              _globalScores.removeWhere((s) => s['playerId'] == _authManager.playerId);
             }
           } catch (_) {}
         }
