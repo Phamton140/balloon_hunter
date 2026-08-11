@@ -66,12 +66,25 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           .get();
 
       if (query.docs.isNotEmpty) {
-        if (query.docs.first.id != widget.gameManager.authManager.playerId) {
-          setState(() {
-            _errorMsg = 'El nombre de usuario "$name" ya está en uso. ¡Elige otro!';
-            _isLoading = false;
-          });
-          return;
+        final existingDoc = query.docs.first;
+        if (existingDoc.id != widget.gameManager.authManager.playerId) {
+          final data = existingDoc.data();
+          bool isExpired = false;
+          
+          if (data['expireAt'] != null) {
+            final expireAt = (data['expireAt'] as Timestamp).toDate();
+            if (expireAt.isBefore(DateTime.now())) {
+              isExpired = true;
+            }
+          }
+
+          if (!isExpired) {
+            setState(() {
+              _errorMsg = 'El nombre de usuario "$name" ya está en uso. ¡Elige otro!';
+              _isLoading = false;
+            });
+            return;
+          }
         }
       }
 

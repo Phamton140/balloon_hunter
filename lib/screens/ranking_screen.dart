@@ -265,23 +265,39 @@ class RankingScreen extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(headerEmoji, style: const TextStyle(fontSize: 40)),
+            GestureDetector(
+              onTap: type == 'amigos' ? () => _showAddFriendCodeDialog(context) : null,
+              child: Tooltip(
+                message: type == 'amigos' ? 'Toca para añadir amigo' : '',
+                triggerMode: type == 'amigos' ? TooltipTriggerMode.longPress : TooltipTriggerMode.manual,
+                child: type == 'amigos' 
+                    ? Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Text(headerEmoji, style: const TextStyle(fontSize: 40)),
+                          Positioned(
+                            bottom: -2,
+                            right: -6,
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF1A0A2E), // Fondo oscuro para contraste
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.add_circle,
+                                color: Color(0xFF43E97B),
+                                size: 22,
+                              ),
+                            ).animate(onPlay: (c) => c.repeat(reverse: true))
+                             .scale(begin: const Offset(1.0, 1.0), end: const Offset(1.2, 1.2), duration: 800.ms),
+                          ),
+                        ],
+                      )
+                    : Text(headerEmoji, style: const TextStyle(fontSize: 40)),
+              ),
+            ),
             const SizedBox(width: 10),
             Text(headerText, style: GoogleFonts.fredoka(fontSize: 20, color: Colors.white)),
-            if (type == 'amigos') ...[
-              const SizedBox(width: 16),
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF43E97B).withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.person_add_alt_1, color: Color(0xFF43E97B)),
-                  onPressed: () => _showAddFriendCodeDialog(context),
-                  tooltip: 'Tu código: ${gameManager.friendsManager.myFriendCode}\nAñadir amigo',
-                ),
-              ),
-            ],
           ],
         ),
         const SizedBox(height: 20),

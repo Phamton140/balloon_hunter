@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'save_manager.dart';
 
 /// Gestiona la sesión del jugador usando Firebase, Google y Facebook.
@@ -60,6 +61,33 @@ class AuthManager extends ChangeNotifier {
     _playerCountryCode = countryCode;
     await _saveManager?.saveProfile(name: name, countryCode: countryCode);
     notifyListeners();
+  }
+
+  /// Actualiza la última vez que el jugador estuvo activo para el sistema de auto-eliminación
+  Future<void> updateLastActive() async {
+    if (!isLoggedIn) return;
+    try {
+      final nameLower = (playerName ?? '').toLowerCase();
+      final isProtected = nameLower == 'melquisedec' || nameLower.startsWith('19_96_');
+      
+      final Map<String, dynamic> updateData = {
+        'lastActive': FieldValue.serverTimestamp(),
+      };
+
+      if (!isProtected) {
+        final expireDate = DateTime.now().add(const Duration(days: 60));
+        updateData['expireAt'] = Timestamp.fromDate(expireDate);
+      } else {
+        // Para usuarios protegidos, ponemos una fecha de expiración en 100 años (o simplemente la quitamos)
+        final expireDate = DateTime.now().add(const Duration(days: 36500));
+        updateData['expireAt'] = Timestamp.fromDate(expireDate);
+      }
+
+      await FirebaseAuth.instance.currentUser?.reload(); // Verifica validez de sesión
+      await FirebaseFirestore.instance.collection('users').doc(playerId).set(updateData, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('[AuthManager] Error updating lastActive: $e');
+    }
   }
 
   /// Inicia sesión con Google

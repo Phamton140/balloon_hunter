@@ -84,6 +84,22 @@ class SaveManager {
     }
   }
 
+  /// Borra el progreso total (nivel máximo, récord personal, tiempo de juego) pero mantiene el perfil de usuario.
+  /// Ideal para realizar pruebas sin perder la cuenta.
+  Future<void> wipeProgress() async {
+    if (_box == null) return;
+    try {
+      await clearSave();
+      await _box!.delete('maxScore');
+      await _box!.delete('personalRecord');
+      await _box!.delete('maxLevel');
+      await _box!.delete('totalPlayTimeSeconds');
+      debugPrint('[SaveManager] Todo el progreso del juego ha sido reiniciado (el perfil de usuario se mantiene).');
+    } catch (e) {
+      debugPrint('[SaveManager] Error wiping progress: $e');
+    }
+  }
+
   /// Guarda el récord personal completo en formato Map
   Future<void> savePersonalRecord(Map<String, dynamic> recordMap) async {
     if (_box == null) return;

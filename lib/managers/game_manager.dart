@@ -3,6 +3,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math' as math;
 import '../models/game_state.dart';
 import '../models/game_event.dart';
@@ -124,6 +125,12 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     await saveManager.initialize();
     await rankingManager.initialize();
     await authManager.initialize(saveManager);
+    
+    if (authManager.isLoggedIn) {
+      authManager.updateLastActive();
+      await rankingManager.fetchGlobalRanking();
+    }
+    
     await rankingManager.syncPlayGamesScore(saveManager);
     if (!saveManager.hasRegistered) {
       _state = GameState.registration;
@@ -154,9 +161,39 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     levelManager.reset();
     timerManager.reset();
     timerManager.start();
+    _playTimeAccumulator = 0.0;
     _deactivateSlowMotion();
     changeState(GameState.countdown);
     await audioManager.playBgm();
+  }
+
+  /// Borra todo el progreso del juego (local y nube) para realizar pruebas,
+  /// manteniendo la sesión del usuario intacta.
+  Future<void> wipeGameData() async {
+    // 1. Borrar progreso local (nivel, max score, etc)
+    await saveManager.wipeProgress();
+    
+    // 2. Restablecer gestores en memoria
+    levelManager.reset();
+    scoreManager.reset();
+    
+    // 3. Borrar de la base de datos (leaderboard) y reiniciar nube
+    if (authManager.isLoggedIn) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('leaderboard')
+            .doc(authManager.playerId)
+            .delete();
+        await cloudSyncManager.syncMaxLevel(1);
+      } catch (e) {
+        debugPrint('[GameManager] Error wiping cloud data: $e');
+      }
+    }
+    
+    // 4. Refrescar UI
+    rankingManager.clearLocalRecord();
+    await rankingManager.fetchGlobalRanking();
+    notifyListeners();
   }
 
   /// Continúa una partida desde el nivel guardado

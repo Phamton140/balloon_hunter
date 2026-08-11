@@ -111,6 +111,8 @@ class RankingManager extends ChangeNotifier {
             _globalScores.add(_personalBestRecord!);
             _globalScores.sort((a, b) => (b['score'] as int? ?? 0).compareTo(a['score'] as int? ?? 0));
           }
+        } else {
+          _personalBestRecord = null;
         }
       }
     } catch (e) {
@@ -142,6 +144,8 @@ class RankingManager extends ChangeNotifier {
                 _globalScores.add(_personalBestRecord!);
                 _globalScores.sort((a, b) => (b['score'] as int? ?? 0).compareTo(a['score'] as int? ?? 0));
               }
+            } else {
+              _personalBestRecord = null;
             }
           } catch (_) {}
         }
@@ -152,6 +156,13 @@ class RankingManager extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Limpia el registro local en memoria
+  void clearLocalRecord() {
+    _personalBestRecord = null;
+    _globalScores.removeWhere((record) => record['playerId'] == _authManager.playerId);
+    notifyListeners();
   }
 
   /// Retorna la mejor puntuación local (buscando en los globales si existe el ID)
@@ -231,10 +242,19 @@ class RankingManager extends ChangeNotifier {
       }
 
       final newRecordMap = record.toMap();
-      topScores.add(newRecordMap);
-      topScores.sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
-      if (topScores.length > 3) {
-        topScores = topScores.sublist(0, 3);
+      
+      bool exactMatch = topScores.any((e) => 
+        e['score'] == record.score && 
+        e['accuracy'] == record.accuracy && 
+        e['maxCombo'] == record.maxCombo
+      );
+      
+      if (!exactMatch) {
+        topScores.add(newRecordMap);
+        topScores.sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
+        if (topScores.length > 3) {
+          topScores = topScores.sublist(0, 3);
+        }
       }
       
       final bestTopScore = topScores.first;
