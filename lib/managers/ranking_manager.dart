@@ -90,7 +90,8 @@ class RankingManager extends ChangeNotifier {
           .orderBy('score', descending: true)
           .orderBy('date', descending: false)
           .limit(100)
-          .get(const GetOptions(source: Source.serverAndCache));
+          .get(const GetOptions(source: Source.serverAndCache))
+          .timeout(const Duration(seconds: 8));
 
       _globalScores = snapshot.docs.map((doc) {
         final data = doc.data();
@@ -104,6 +105,12 @@ class RankingManager extends ChangeNotifier {
         if (myDoc.exists) {
           _personalBestRecord = myDoc.data();
           _personalBestRecord?['id'] = myDoc.id;
+          
+          // Inject my record into the global list if not present, so I always see myself
+          if (!_globalScores.any((s) => s['playerId'] == _authManager.playerId)) {
+            _globalScores.add(_personalBestRecord!);
+            _globalScores.sort((a, b) => (b['score'] as int? ?? 0).compareTo(a['score'] as int? ?? 0));
+          }
         }
       }
     } catch (e) {
@@ -130,6 +137,11 @@ class RankingManager extends ChangeNotifier {
             if (myDoc.exists) {
               _personalBestRecord = myDoc.data();
               _personalBestRecord?['id'] = myDoc.id;
+              
+              if (!_globalScores.any((s) => s['playerId'] == _authManager.playerId)) {
+                _globalScores.add(_personalBestRecord!);
+                _globalScores.sort((a, b) => (b['score'] as int? ?? 0).compareTo(a['score'] as int? ?? 0));
+              }
             }
           } catch (_) {}
         }
@@ -183,33 +195,61 @@ class RankingManager extends ChangeNotifier {
       // 1. Guardar en Firestore
       final docRef = _firestore.collection('leaderboard').doc(_authManager.playerId);
       
-      bool isNewRecord = true;
+      bool isNewRecord = false;
+      List<dynamic> topScores = [];
+      
       try {
         final doc = await docRef.get(const GetOptions(source: Source.serverAndCache));
         if (doc.exists) {
-          final currentScore = doc.data()?['score'] ?? 0;
-          if (record.score <= currentScore) {
-            isNewRecord = false; // No superó su propio récord
+          final docData = doc.data();
+          if (docData != null) {
+            if (docData.containsKey('topScores')) {
+              topScores = List.from(docData['topScores'] as List);
+            } else if (docData.containsKey('score')) {
+              topScores = [
+                {
+                  'score': docData['score'],
+                  'date': docData['date'],
+                  'level': docData['level'] ?? 1,
+                  'balloonsDestroyed': docData['balloonsDestroyed'] ?? 0,
+                  'accuracy': docData['accuracy'] ?? 0.0,
+                  'maxCombo': docData['maxCombo'] ?? 0,
+                }
+              ];
+            }
           }
+          final currentScore = docData?['score'] ?? 0;
+          if (record.score > currentScore) {
+            isNewRecord = true;
+          }
+        } else {
+          isNewRecord = true;
         }
       } catch (e) {
-        // Si falla la lectura (ej. sin internet y sin caché), asumimos que es récord nuevo
-        // para asegurar que al menos se intente guardar localmente en la caché.
+        // Asumir que es nuevo si hay error
+        isNewRecord = true;
       }
 
+      final newRecordMap = record.toMap();
+      topScores.add(newRecordMap);
+      topScores.sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
+      if (topScores.length > 3) {
+        topScores = topScores.sublist(0, 3);
+      }
+      
+      final bestTopScore = topScores.first;
+      final data = Map<String, dynamic>.from(bestTopScore);
+      data['playerName'] = _authManager.playerName;
+      data['countryCode'] = _authManager.playerCountryCode;
+      data['playerId'] = _authManager.playerId;
+      data['topScores'] = topScores;
+      
+      docRef.set(data, SetOptions(merge: true));
+      
+      _personalBestRecord = data;
+      _personalBestRecord!['id'] = _authManager.playerId;
+      // 2. Enviar a Google Play Games en segundo plano
       if (isNewRecord) {
-        final data = record.toMap();
-        data['playerName'] = _authManager.playerName;
-        data['countryCode'] = _authManager.playerCountryCode;
-        data['playerId'] = _authManager.playerId;
-        
-        // No hacer await para no bloquear el juego si no hay internet
-        docRef.set(data, SetOptions(merge: true));
-        
-        // Actualizar la memoria instantáneamente de forma "radical"
-        _personalBestRecord = data;
-        _personalBestRecord!['id'] = _authManager.playerId;
-        // 2. Enviar a Google Play Games en segundo plano
         try {
           if (await GamesServices.isSignedIn) {
             await GamesServices.submitScore(
@@ -222,10 +262,11 @@ class RankingManager extends ChangeNotifier {
         } catch (e) {
           debugPrint('[RankingManager] Play Games submit error: $e');
         }
-        
-        // Refrescar ranking
-        await fetchGlobalRanking();
       }
+      
+      // Refrescar ranking para ver Top 3 local
+      await fetchGlobalRanking();
+      
       return isNewRecord;
     } catch (e) {
       debugPrint('[RankingManager] Error adding record: $e');

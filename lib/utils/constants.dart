@@ -37,7 +37,7 @@ class GameConstants {
   static const double birdSpeedMax = 200.0;
 
   // -- Duración del nivel en segundos --
-  static const double levelDuration = 30.0;
+  static const double levelDuration = 45.0;
 
   // -- Interfaz de Usuario --
   static const double hudHeight = 80.0; // Altura del HUD superior (compacto medio)

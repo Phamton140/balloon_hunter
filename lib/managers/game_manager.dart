@@ -16,6 +16,7 @@ import 'save_manager.dart';
 import 'auth_manager.dart';
 import 'friends_manager.dart';
 import 'cloud_sync_manager.dart';
+import 'inbox_manager.dart';
 import '../models/score_record.dart';
 
 class SyncConflictData {
@@ -52,6 +53,7 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     required this.cloudSyncManager,
     required this.authManager,
     required this.friendsManager,
+    required this.inboxManager,
   }) {
     WidgetsBinding.instance.addObserver(this);
   }
@@ -93,6 +95,7 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
   final CloudSyncManager cloudSyncManager;
   final AuthManager authManager;
   final FriendsManager friendsManager;
+  final InboxManager inboxManager;
 
   // -- Estado transitorio --
   GameState _state = GameState.mainMenu;

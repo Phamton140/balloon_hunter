@@ -21,6 +21,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  double _previousVolume = 0.6;
   @override
   Widget build(BuildContext context) {
     final audio = widget.gameManager.audioManager;
@@ -66,10 +67,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 16),
 
                   _SettingCard(
-                    icon: Icons.volume_up,
+                    icon: audio.masterVolume > 0 ? Icons.volume_up : Icons.volume_off,
                     title: 'Volumen General',
                     subtitle: '${(audio.masterVolume * 100).round()}%',
                     trailing: const SizedBox.shrink(),
+                    onIconTap: () async {
+                      if (audio.masterVolume > 0) {
+                        _previousVolume = audio.masterVolume;
+                        await audio.setMasterVolume(0.0);
+                      } else {
+                        await audio.setMasterVolume(_previousVolume > 0 ? _previousVolume : 0.6);
+                      }
+                      setState(() {});
+                    },
                     bottom: Slider(
                       value: audio.masterVolume,
                       min: 0.0,
@@ -78,6 +88,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       inactiveColor: Colors.white24,
                       onChanged: (v) async {
                         await audio.setMasterVolume(v);
+                        if (v > 0) _previousVolume = v;
                         setState(() {});
                       },
                     ),
@@ -101,6 +112,7 @@ class _SettingCard extends StatelessWidget {
   final String subtitle;
   final Widget trailing;
   final Widget? bottom;
+  final VoidCallback? onIconTap;
 
   const _SettingCard({
     required this.icon,
@@ -108,6 +120,7 @@ class _SettingCard extends StatelessWidget {
     required this.subtitle,
     required this.trailing,
     this.bottom,
+    this.onIconTap,
   });
 
   @override
@@ -123,13 +136,16 @@ class _SettingCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white12,
-                  borderRadius: BorderRadius.circular(10),
+              GestureDetector(
+                onTap: onIconTap,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white12,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: Colors.white70, size: 22),
                 ),
-                child: Icon(icon, color: Colors.white70, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -340,28 +356,7 @@ class _ProfileCardState extends State<_ProfileCard> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            GestureDetector(
-              onTap: _showAddFriendDialog,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.07),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.person_add, color: Colors.white, size: 18),
-                    const SizedBox(width: 8),
-                    Text('Añadir Amigo', style: GoogleFonts.fredoka(fontSize: 14, color: Colors.white)),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ).animate().fadeIn(delay: 50.ms).slideX(begin: -0.2);
+      ],
+    );
   }
 }

@@ -52,7 +52,7 @@ class _GameOverScreenState extends State<GameOverScreen> {
     final maxCombo = gameManager.scoreManager.maxCombo;
     final destroyed = gameManager.scoreManager.balloonsDestroyed;
     final bestScore = gameManager.rankingManager.getBestScore();
-    final isNewRecord = score >= bestScore && score > 0;
+    final isNewRecord = score > bestScore;
 
     return Container(
       decoration: const BoxDecoration(

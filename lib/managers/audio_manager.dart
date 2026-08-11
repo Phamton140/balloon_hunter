@@ -34,10 +34,10 @@ class AudioManager {
         'level_up.mp3',
       ]);
 
-      _sfxPools['pop_bubble.mp3'] = await FlameAudio.createPool('pop_bubble.mp3', minPlayers: 2, maxPlayers: 10);
-      _sfxPools['ice.mp3'] = await FlameAudio.createPool('ice.mp3', minPlayers: 1, maxPlayers: 5);
-      _sfxPools['pop_black.mp3'] = await FlameAudio.createPool('pop_black.mp3', minPlayers: 1, maxPlayers: 4);
-      _sfxPools['bird_hit.mp3'] = await FlameAudio.createPool('bird_hit.mp3', minPlayers: 1, maxPlayers: 3);
+      _sfxPools['pop_bubble.mp3'] = await FlameAudio.createPool('pop_bubble.mp3', minPlayers: 15, maxPlayers: 30);
+      _sfxPools['ice.mp3'] = await FlameAudio.createPool('ice.mp3', minPlayers: 3, maxPlayers: 5);
+      _sfxPools['pop_black.mp3'] = await FlameAudio.createPool('pop_black.mp3', minPlayers: 2, maxPlayers: 4);
+      _sfxPools['bird_hit.mp3'] = await FlameAudio.createPool('bird_hit.mp3', minPlayers: 2, maxPlayers: 3);
       _sfxPools['level_up.mp3'] = await FlameAudio.createPool('level_up.mp3', minPlayers: 1, maxPlayers: 2);
     } catch (e) {
       debugPrint('[AudioManager] Error loading audio: $e');

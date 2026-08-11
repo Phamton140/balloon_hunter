@@ -4,15 +4,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'auth_manager.dart';
 
+import 'inbox_manager.dart';
+
 class FriendsManager extends ChangeNotifier {
   final AuthManager _authManager;
+  final InboxManager _inboxManager;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   List<String> _friendIds = [];
   String? _myFriendCode;
   bool _isLoading = false;
 
-  FriendsManager(this._authManager) {
+  FriendsManager(this._authManager, this._inboxManager) {
     _authManager.addListener(_onAuthChanged);
   }
 
@@ -64,7 +67,7 @@ class FriendsManager extends ChangeNotifier {
     return 'BHT-${List.generate(4, (index) => chars[random.nextInt(chars.length)]).join()}';
   }
 
-  /// Añadir a alguien por su ID de Jugador (Tap en la tabla de ranking)
+  /// Añadir a alguien por su ID de Jugador (Tap en la tabla de ranking) envía solicitud
   Future<bool> addFriendById(String targetPlayerId) async {
     if (!_authManager.isLoggedIn || targetPlayerId == _authManager.playerId) return false;
     if (_friendIds.contains(targetPlayerId)) return true; // Ya lo sigue
@@ -73,16 +76,12 @@ class FriendsManager extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _friendIds.add(targetPlayerId);
-      await _firestore.collection('users').doc(_authManager.playerId).update({
-        'friendsList': FieldValue.arrayUnion([targetPlayerId])
-      });
+      final success = await _inboxManager.sendRequest(targetPlayerId);
       _isLoading = false;
       notifyListeners();
-      return true;
+      return success;
     } catch (e) {
-      debugPrint('[FriendsManager] Error adding friend by ID: $e');
-      _friendIds.remove(targetPlayerId);
+      debugPrint('[FriendsManager] Error sending friend request: $e');
       _isLoading = false;
       notifyListeners();
       return false;

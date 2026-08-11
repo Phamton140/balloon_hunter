@@ -91,55 +91,6 @@ class RankingScreen extends StatelessWidget {
                 ),
               ),
 
-              // Ver en Play Games Button
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                child: GestureDetector(
-                  onTap: () async {
-                    try {
-                      if (await GamesServices.isSignedIn) {
-                        await GamesServices.showLeaderboards(
-                          androidLeaderboardID: GameConstants.leaderboardGlobalId,
-                        );
-                      } else {
-                        await GamesServices.signIn();
-                        await GamesServices.showLeaderboards(
-                          androidLeaderboardID: GameConstants.leaderboardGlobalId,
-                        );
-                      }
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error al abrir Play Games: $e')),
-                        );
-                      }
-                    }
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1B5E20), // Dark green for Play Games
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(color: Colors.greenAccent.withValues(alpha: 0.3)),
-                    ),
-                    child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.games, color: Colors.white, size: 18),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Ver en Play Games',
-                            style: GoogleFonts.fredoka(fontSize: 16, color: Colors.white),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
               // Play Button
               Padding(
                 padding: const EdgeInsets.all(20),
@@ -204,27 +155,35 @@ class RankingScreen extends StatelessWidget {
       );
     }
 
-    final record = ScoreRecord.fromMap(rawRecord);
+    List<dynamic> scoresToDisplay = [];
+    if (rawRecord.containsKey('topScores')) {
+      scoresToDisplay = List.from(rawRecord['topScores'] as List);
+    } else {
+      scoresToDisplay = [rawRecord];
+    }
 
     return Column(
       children: [
         const SizedBox(height: 20),
         const Text('👤', style: TextStyle(fontSize: 40)),
         const SizedBox(height: 10),
-        Text('Tu Mejor Puntuación', style: GoogleFonts.fredoka(fontSize: 20, color: Colors.white)),
+        Text('Tus Mejores Puntuaciones', style: GoogleFonts.fredoka(fontSize: 20, color: Colors.white)),
         const SizedBox(height: 20),
         _buildTableHeader(showCountry: false),
         Expanded(
-          child: ListView(
-            children: [
-              _TableRow(
+          child: ListView.builder(
+            itemCount: scoresToDisplay.length,
+            itemBuilder: (context, i) {
+              final scoreData = scoresToDisplay[i] as Map<String, dynamic>;
+              final record = ScoreRecord.fromMap(scoreData);
+              return _TableRow(
                 record: record,
-                position: 1,
+                position: i + 1,
                 playerName: gameManager.authManager.isLoggedIn ? gameManager.authManager.playerName : 'Tú',
                 isCurrentUser: true,
-                isEven: true,
-              ).animate().fadeIn().slideX(begin: -0.2),
-            ],
+                isEven: i % 2 == 0,
+              ).animate(delay: Duration(milliseconds: i * 50)).fadeIn().slideX(begin: -0.2);
+            },
           ),
         ),
       ],
@@ -323,24 +282,26 @@ class RankingScreen extends StatelessWidget {
   Widget _buildFriendsHeader(BuildContext context) {
     return Column(
       children: [
-        const Text('👥', style: TextStyle(fontSize: 40)),
-        const SizedBox(height: 10),
-        Text('Amigos', style: GoogleFonts.fredoka(fontSize: 20, color: Colors.white)),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton.icon(
-              onPressed: () => _showAddFriendCodeDialog(context),
-              icon: const Icon(Icons.person_add, size: 16),
-              label: const Text('Código'),
+        GestureDetector(
+          onTap: () => _showAddFriendCodeDialog(context),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white24),
             ),
-          ],
-        ),
-        const SizedBox(height: 5),
-        Text(
-          'Tu Código: ${gameManager.friendsManager.myFriendCode}',
-          style: const TextStyle(color: Colors.white54, fontSize: 12),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('👥', style: TextStyle(fontSize: 32)),
+                const SizedBox(width: 12),
+                Text('Añadir Amigo', style: GoogleFonts.fredoka(fontSize: 18, color: Colors.white)),
+                const SizedBox(width: 8),
+                const Icon(Icons.add_circle, color: Color(0xFF43E97B), size: 24),
+              ],
+            ),
+          ),
         ),
       ],
     );

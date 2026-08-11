@@ -14,6 +14,8 @@ class MainMenuScreen extends StatefulWidget {
   final VoidCallback? onRanking;
   final VoidCallback? onSettings;
   final VoidCallback? onCollection;
+  final VoidCallback? onExit;
+
   const MainMenuScreen({
     super.key,
     required this.gameManager,
@@ -22,6 +24,7 @@ class MainMenuScreen extends StatefulWidget {
     this.onRanking,
     this.onSettings,
     this.onCollection,
+    this.onExit,
   });
 
   @override
@@ -89,44 +92,95 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.black,
-        image: DecorationImage(
-          image: AssetImage('assets/images/menu_bg.png'),
-          fit: BoxFit.cover,
-          alignment: Alignment.center,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) widget.onExit?.call();
+      },
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.black,
+          image: DecorationImage(
+            image: AssetImage('assets/images/menu_bg.png'),
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+          ),
         ),
-      ),
-      child: SafeArea(
-        child: Stack(
-          children: [
-            // Globos decorativos que suben
-            CustomPaint(
-              painter: _MenuBalloonsPainter(_balloons),
-              size: Size.infinite,
-            ),
-            
-            // Icono de Ajustes (Top Right)
-            Positioned(
-              top: 16,
-              right: 16,
-              child: GestureDetector(
-                onTap: () => widget.onSettings?.call(),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white24, width: 1),
-                  ),
-                  child: const Icon(Icons.settings, color: Colors.white, size: 28),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              // Globos decorativos que suben
+              CustomPaint(
+                painter: _MenuBalloonsPainter(_balloons),
+                size: Size.infinite,
+              ),
+              
+              // Iconos Top Right
+              Positioned(
+                top: 16,
+                right: 16,
+                child: Row(
+                  children: [
+                    // Bell icon
+                    AnimatedBuilder(
+                      animation: widget.gameManager.inboxManager,
+                      builder: (context, _) {
+                        final hasUnread = widget.gameManager.inboxManager.hasUnread;
+                        return GestureDetector(
+                          onTap: () => _showInboxDialog(context),
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.3),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white24, width: 1),
+                                ),
+                                child: const Icon(Icons.notifications, color: Colors.white, size: 28),
+                              ),
+                              if (hasUnread)
+                                Positioned(
+                                  top: -2,
+                                  right: -2,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.redAccent,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Text(
+                                      '${widget.gameManager.inboxManager.pendingRequests.length}',
+                                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                    ),
+                                  ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(begin: const Offset(1, 1), end: const Offset(1.1, 1.1)),
+                                ),
+                            ],
+                          ),
+                        ).animate().fadeIn(delay: 200.ms).scale();
+                      }
+                    ),
+                    const SizedBox(width: 12),
+                    // Settings icon
+                    GestureDetector(
+                      onTap: () => widget.onSettings?.call(),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.3),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white24, width: 1),
+                        ),
+                        child: const Icon(Icons.settings, color: Colors.white, size: 28),
+                      ),
+                    ).animate().fadeIn(delay: 300.ms).scale(),
+                  ],
                 ),
-              ).animate().fadeIn(delay: 200.ms).scale(),
-            ),
+              ),
 
-            // Contenido Central
-            Column(
+              // Contenido Central
+              Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 const Spacer(), // Empuja TODO hacia abajo lo máximo posible
@@ -209,6 +263,91 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
           ],
         ),
       ),
+    ));
+  }
+
+  void _showInboxDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF2C3E50), Color(0xFF000000)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white24, width: 2),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20, offset: const Offset(0, 10)),
+            ],
+          ),
+          child: AnimatedBuilder(
+            animation: widget.gameManager.inboxManager,
+            builder: (context, _) {
+              final requests = widget.gameManager.inboxManager.pendingRequests;
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'NOTIFICACIONES',
+                    style: GoogleFonts.fredoka(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  if (requests.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text('No tienes solicitudes pendientes.', style: GoogleFonts.fredoka(color: Colors.white70)),
+                    )
+                  else
+                    SizedBox(
+                      height: 200,
+                      child: ListView.builder(
+                        itemCount: requests.length,
+                        itemBuilder: (context, i) {
+                          final r = requests[i];
+                          return ListTile(
+                            leading: const Icon(Icons.person, color: Colors.white),
+                            title: Text(r.fromPlayerName, style: GoogleFonts.fredoka(color: Colors.white)),
+                            subtitle: Text('Quiere ser tu amigo', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.check_circle, color: Colors.greenAccent),
+                                  onPressed: () => widget.gameManager.inboxManager.respondToRequest(r.id, r.fromPlayerId, true),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.cancel, color: Colors.redAccent),
+                                  onPressed: () => widget.gameManager.inboxManager.respondToRequest(r.id, r.fromPlayerId, false),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white24,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('CERRAR'),
+                  )
+                ],
+              );
+            },
+          ),
+        ).animate().scale(duration: 300.ms, curve: Curves.easeOutBack),
+      ),
     );
   }
 
@@ -216,33 +355,79 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
     if (widget.gameManager.hasSavedGame) {
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: Colors.grey.shade900,
-          title: Text(
-            'Partida en progreso',
-            style: GoogleFonts.fredoka(color: Colors.white),
-          ),
-          content: Text(
-            '¿Desea continuar con la partida anterior?\n\nNivel: ${widget.gameManager.saveManager.savedLevel}\nPuntuación: ${widget.gameManager.saveManager.savedScore}',
-            style: const TextStyle(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                widget.onNewGame?.call();
-              },
-              child: const Text('NUEVA PARTIDA', style: TextStyle(color: Colors.redAccent)),
+        barrierColor: Colors.black87,
+        builder: (context) => Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF2C3E50), Color(0xFF000000)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white24, width: 2),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20, offset: const Offset(0, 10)),
+              ],
             ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                widget.onResume?.call();
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF43E97B)),
-              child: const Text('CONTINUAR', style: TextStyle(color: Colors.black)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('🎈', style: TextStyle(fontSize: 48)),
+                const SizedBox(height: 16),
+                Text(
+                  'PARTIDA EN CURSO',
+                  style: GoogleFonts.fredoka(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Nivel: ${widget.gameManager.saveManager.savedLevel}\nPuntuación: ${widget.gameManager.saveManager.savedScore}',
+                  style: GoogleFonts.fredoka(fontSize: 18, color: Colors.white70),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          widget.onNewGame?.call();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text('NUEVA', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          widget.onResume?.call();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF43E97B),
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text('CONTINUAR', style: GoogleFonts.fredoka(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ).animate().scale(duration: 300.ms, curve: Curves.easeOutBack),
         ),
       );
     } else {

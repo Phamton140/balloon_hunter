@@ -15,6 +15,7 @@ import 'components/floating_text_component.dart';
 import 'components/ice_effect_component.dart';
 import 'managers/auth_manager.dart';
 import 'managers/friends_manager.dart';
+import 'managers/inbox_manager.dart';
 import 'managers/audio_manager.dart';
 import 'managers/collision_manager.dart';
 import 'managers/enemy_director.dart';
@@ -43,6 +44,7 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
   final TimerManager timerManager = TimerManager();
   final AuthManager authManager = AuthManager();
   late final FriendsManager friendsManager;
+  late final InboxManager inboxManager;
   late final RankingManager rankingManager;
   final EventManager eventManager = EventManager();
   final CollisionManager collisionManager = CollisionManager();
@@ -59,7 +61,8 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
   bool _birdHitGameOver = false;
 
   BalloonHunterGame() {
-    friendsManager = FriendsManager(authManager);
+    inboxManager = InboxManager(authManager);
+    friendsManager = FriendsManager(authManager, inboxManager);
     rankingManager = RankingManager(authManager);
     
     gameManager = GameManager(
@@ -73,6 +76,7 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
       cloudSyncManager: cloudSyncManager,
       authManager: authManager,
       friendsManager: friendsManager,
+      inboxManager: inboxManager,
     );
   }
 

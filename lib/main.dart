@@ -169,9 +169,27 @@ class _GameScreenState extends State<_GameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF16213E), // Color oscuro del tema en lugar de negro puro
-      body: Column(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          final state = _game.gameManager.state;
+          if (state == GameState.ranking || state == GameState.settings || state == GameState.collection) {
+            _game.gameManager.goToMenu();
+          } else if (state == GameState.playing) {
+            _game.pauseGame();
+            _game.gameManager.pauseGame();
+          } else if (state == GameState.paused) {
+            _game.resumeGame();
+            _game.gameManager.resumeGame();
+          } else if (state == GameState.mainMenu) {
+            SystemNavigator.pop();
+          }
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF16213E), // Color oscuro del tema en lugar de negro puro
+        body: Column(
         children: [
           Expanded(
             child: GameWidget<BalloonHunterGame>.controlled(
@@ -313,7 +331,7 @@ class _GameScreenState extends State<_GameScreen> {
           const BannerAdWidget(),
         ],
       ),
-    );
+    ));
   }
 }
 

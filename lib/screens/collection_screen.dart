@@ -6,6 +6,12 @@ import '../utils/palette.dart';
 import '../components/balloon_widget.dart';
 import '../models/balloon_type.dart';
 
+class _ItemConfig {
+  final int requiredLevel;
+  final Widget Function(int currentLevel) builder;
+  _ItemConfig(this.requiredLevel, this.builder);
+}
+
 class CollectionScreen extends StatelessWidget {
   final GameManager gameManager;
   final VoidCallback onBack;
@@ -19,6 +25,29 @@ class CollectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final maxLevel = gameManager.saveManager.maxLevelReached;
+
+    final allItems = [
+      _ItemConfig(1, (cl) => _buildThemeItem(name: 'Tema 1: Naturaleza', requiredLevel: 1, currentLevel: cl, previewAsset: 'assets/images/bg_afternoon.png')),
+      _ItemConfig(10, (cl) => _buildBalloonItem(name: 'Globo de Hielo', description: 'Ralentiza el tiempo temporalmente.', requiredLevel: 10, currentLevel: cl, type: BalloonType.blue)),
+      _ItemConfig(20, (cl) => _buildThemeItem(name: 'Tema 2: Desierto', requiredLevel: 20, currentLevel: cl, previewAsset: 'assets/images/bg_afternoon_2.jpg')),
+      _ItemConfig(30, (cl) => _buildBalloonItem(name: 'Globo Bomba', description: 'Explota todos los globos en pantalla.', requiredLevel: 30, currentLevel: cl, type: BalloonType.black)),
+      _ItemConfig(40, (cl) => _buildThemeItem(name: 'Tema 3: Colinas', requiredLevel: 40, currentLevel: cl, previewAsset: 'assets/images/bg_afternoon_3.png')),
+      _ItemConfig(50, (cl) => _buildBalloonItem(name: 'Globo Reloj', description: 'Resta 5 segundos al temporizador.', requiredLevel: 50, currentLevel: cl, type: BalloonType.clock)),
+      _ItemConfig(60, (cl) => _buildBalloonItem(name: 'Globo Blindado', description: 'Requiere 3 toques para explotar.', requiredLevel: 60, currentLevel: cl, type: BalloonType.armored)),
+    ];
+
+    int visibleCount = 0;
+    for (int i = 0; i < allItems.length; i++) {
+      if (maxLevel > allItems[i].requiredLevel) {
+        visibleCount++;
+      } else {
+        visibleCount += 3;
+        break;
+      }
+    }
+    if (visibleCount > allItems.length) visibleCount = allItems.length;
+
+    final visibleItems = allItems.take(visibleCount).map((c) => c.builder(maxLevel)).toList();
 
     return Container(
       decoration: const BoxDecoration(gradient: Palette.menuGradient),
@@ -65,52 +94,7 @@ class CollectionScreen extends StatelessWidget {
                   physics: const BouncingScrollPhysics(),
                   children: [
                     _buildSectionTitle('Recompensas por Nivel'),
-                    _buildThemeItem(
-                      name: 'Tema 1: Naturaleza',
-                      requiredLevel: 1,
-                      currentLevel: maxLevel,
-                      previewAsset: 'assets/images/bg_afternoon.png',
-                    ),
-                    _buildBalloonItem(
-                      name: 'Globo de Hielo',
-                      description: 'Ralentiza el tiempo temporalmente.',
-                      requiredLevel: 10,
-                      currentLevel: maxLevel,
-                      type: BalloonType.blue,
-                    ),
-                    _buildThemeItem(
-                      name: 'Tema 2: Desierto',
-                      requiredLevel: 20,
-                      currentLevel: maxLevel,
-                      previewAsset: 'assets/images/bg_afternoon_2.jpg',
-                    ),
-                    _buildBalloonItem(
-                      name: 'Globo Bomba',
-                      description: 'Explota todos los globos en pantalla.',
-                      requiredLevel: 30,
-                      currentLevel: maxLevel,
-                      type: BalloonType.black,
-                    ),
-                    _buildThemeItem(
-                      name: 'Tema 3: Colinas',
-                      requiredLevel: 40,
-                      currentLevel: maxLevel,
-                      previewAsset: 'assets/images/bg_afternoon_3.png',
-                    ),
-                    _buildBalloonItem(
-                      name: 'Globo Reloj',
-                      description: 'Resta 5 segundos al temporizador.',
-                      requiredLevel: 50,
-                      currentLevel: maxLevel,
-                      type: BalloonType.clock,
-                    ),
-                    _buildBalloonItem(
-                      name: 'Globo Blindado',
-                      description: 'Requiere 3 toques para explotar.',
-                      requiredLevel: 60,
-                      currentLevel: maxLevel,
-                      type: BalloonType.armored,
-                    ),
+                    ...visibleItems,
                   ],
                 ),
               ),
@@ -144,7 +128,7 @@ class CollectionScreen extends StatelessWidget {
     Color? fallbackColor,
     IconData? fallbackIcon,
   }) {
-    final isUnlocked = currentLevel >= requiredLevel;
+    final isUnlocked = currentLevel > requiredLevel;
     final color = type?.color ?? fallbackColor ?? Colors.grey;
 
     return Container(
@@ -210,7 +194,7 @@ class CollectionScreen extends StatelessWidget {
     required int currentLevel,
     required String previewAsset,
   }) {
-    final isUnlocked = currentLevel >= requiredLevel;
+    final isUnlocked = currentLevel > requiredLevel;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
