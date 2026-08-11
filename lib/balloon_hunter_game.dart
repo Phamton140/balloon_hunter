@@ -9,8 +9,12 @@ import 'components/background_component.dart';
 import 'components/balloon_component.dart';
 import 'components/bird_component.dart';
 import 'components/special_balloon_component.dart';
+import 'components/armored_balloon_component.dart';
 import 'components/explosion_component.dart';
+import 'components/floating_text_component.dart';
 import 'components/ice_effect_component.dart';
+import 'managers/auth_manager.dart';
+import 'managers/friends_manager.dart';
 import 'managers/audio_manager.dart';
 import 'managers/collision_manager.dart';
 import 'managers/enemy_director.dart';
@@ -27,6 +31,8 @@ import 'models/game_event.dart';
 import 'models/game_state.dart';
 import 'utils/constants.dart';
 
+import 'managers/cloud_sync_manager.dart';
+
 /// FlameGame principal de Balloon Hunter.
 /// Gestiona el game loop, los overlays y coordina todos los subsistemas.
 class BalloonHunterGame extends FlameGame with TapCallbacks {
@@ -35,12 +41,15 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
   final ScoreManager scoreManager = ScoreManager();
   final LevelManager levelManager = LevelManager();
   final TimerManager timerManager = TimerManager();
-  final RankingManager rankingManager = RankingManager();
+  final AuthManager authManager = AuthManager();
+  late final FriendsManager friendsManager;
+  late final RankingManager rankingManager;
   final EventManager eventManager = EventManager();
   final CollisionManager collisionManager = CollisionManager();
   final EnemyDirector enemyDirector = EnemyDirector();
   final SpawnManager spawnManager = SpawnManager();
   final SaveManager saveManager = SaveManager();
+  final CloudSyncManager cloudSyncManager = CloudSyncManager();
   late final GameManager gameManager;
   late final BackgroundComponent background;
 
@@ -50,6 +59,9 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
   bool _birdHitGameOver = false;
 
   BalloonHunterGame() {
+    friendsManager = FriendsManager(authManager);
+    rankingManager = RankingManager(authManager);
+    
     gameManager = GameManager(
       audioManager: audioManager,
       scoreManager: scoreManager,
@@ -58,6 +70,9 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
       rankingManager: rankingManager,
       eventManager: eventManager,
       saveManager: saveManager,
+      cloudSyncManager: cloudSyncManager,
+      authManager: authManager,
+      friendsManager: friendsManager,
     );
   }
 
@@ -65,8 +80,16 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
   Future<void> onLoad() async {
     // 1. Inicializar componentes asíncronos de los gestores
     await audioManager.initialize();
-    await rankingManager.initialize();
     await saveManager.initialize();
+    
+    // Iniciar de forma asíncrona sin bloquear la pantalla de carga principal
+    // porque pueden tardar mucho o fallar si no hay internet
+    rankingManager.initialize();
+    cloudSyncManager.initialize();
+    authManager.initialize(saveManager);
+    
+    // Configurar observador del ciclo de vida para Flame
+    // No necesitamos LifecycleListener porque la app principal lo maneja
 
     // 2. Inicializar SpawnManager con pools
     spawnManager.initialize(
@@ -136,17 +159,23 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
 
   void _handleSpawn() {
     final config = levelManager.config;
+    final maxLevel = gameManager.saveManager.maxLevelReached;
 
     // ¿Globo negro especial?
-    if (enemyDirector.shouldSpawnBlackBalloon(config)) {
+    if (enemyDirector.shouldSpawnBlackBalloon(config, maxLevel)) {
       _spawnSpecialBalloon(BalloonType.black);
       return;
     }
 
     // ¿Globo azul especial?
-    if (enemyDirector.shouldSpawnBlueBalloon(config)) {
+    if (enemyDirector.shouldSpawnBlueBalloon(config, maxLevel)) {
       _spawnSpecialBalloon(BalloonType.blue);
       // También puede aparecer un globo normal en el mismo ciclo
+    }
+
+    // ¿Globo reloj especial?
+    if (enemyDirector.shouldSpawnClockBalloon(config, maxLevel)) {
+      _spawnSpecialBalloon(BalloonType.clock);
     }
 
     // ¿Ave?
@@ -159,6 +188,18 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
   }
 
   void _spawnNormalBalloon() {
+    final config = levelManager.config;
+    final maxLevel = gameManager.saveManager.maxLevelReached;
+
+    // ¿Globo blindado?
+    if (enemyDirector.shouldSpawnArmoredBalloon(config, maxLevel)) {
+      final balloon = spawnManager.spawnArmoredBalloon();
+      balloon.onTapped = _onArmoredBalloonTapped;
+      balloon.onEscaped = _onArmoredBalloonEscaped;
+      return; // Los blindados reemplazan un spawn normal para no saturar la pantalla
+    }
+
+    // ¿Globo normal?
     final type = enemyDirector.selectBalloonType(levelManager.config);
     final balloon = spawnManager.spawnBalloon(type);
     balloon.onTapped = _onBalloonTapped;
@@ -211,6 +252,46 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
     }
   }
 
+  void _onArmoredBalloonTapped(ArmoredBalloonComponent armored) {
+    if (gameManager.state != GameState.playing) return;
+    
+    // Reproducir un sonido metálico. Se puede simular bajando el pitch o usando playHit
+    // Como aún no tenemos un audio especial, usamos playPopBlack o uno genérico:
+    // Idealmente: audioManager.playMetalHit();
+    // Por ahora reusaremos popBlack para el daño
+    
+    armored.takeHit();
+    
+    if (armored.hp <= 0) {
+      // Explotó
+      audioManager.playPopRed(); // Sonido estándar de explosión de globo
+      spawnManager.spawnExplosion(armored.position, type: armored.balloonType);
+      
+      collisionManager.handleBalloonTap(armored.balloonType);
+      
+      add(FloatingTextComponent(
+          text: '+10',
+          position: armored.position.clone(),
+          color: Colors.white,
+      ));
+      
+      armored.explodeAndReturn();
+    } else {
+      // Solo recibió daño
+      audioManager.playPopBlack(); // Simularemos el golpe duro con este sonido por ahora
+      // Se podría añadir texto de "+Daño" flotante si se desea
+    }
+  }
+
+  void _onArmoredBalloonEscaped(ArmoredBalloonComponent armored) {
+    if (gameManager.state != GameState.playing) return;
+    levelManager.onBalloonEscaped();
+    if (levelManager.isGameOver) {
+      _birdHitGameOver = false;
+      gameManager.triggerGameOver();
+    }
+  }
+
   void _onSpecialBalloonTapped(SpecialBalloonComponent special) {
     if (gameManager.state != GameState.playing) return;
 
@@ -246,6 +327,16 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
       } else if (type == BalloonType.black) {
         audioManager.playPopBlack();
         gameManager.activateBlackBalloon();
+      } else if (type == BalloonType.clock) {
+        audioManager.playLevelUp(); // Usaremos este sonido que da sensación de premio
+        gameManager.activateClockBalloon();
+        
+        // Mostrar animación de texto flotante en el centro de la pantalla
+        add(FloatingTextComponent(
+          text: '-10s',
+          position: Vector2(size.x / 2, size.y / 2),
+          color: Colors.orangeAccent,
+        ));
       }
     };
 

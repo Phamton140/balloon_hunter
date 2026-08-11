@@ -46,6 +46,22 @@ enum BalloonType {
     glowColor: Palette.balloonBlackGlow,
     particleColor: Palette.particleBlack,
     isSpecial: true,
+  ),
+  clock(
+    points: 0,
+    baseSpeed: 140.0, // A bit fast so it's a challenge to hit
+    color: Palette.balloonClock,
+    glowColor: Palette.balloonClockGlow,
+    particleColor: Palette.particleClock,
+    isSpecial: true,
+  ),
+  armored(
+    points: 10,
+    baseSpeed: 160.0, // A bit faster, heavy but rewarding
+    color: Palette.armoredPremium,
+    glowColor: Palette.armoredPremiumGlow,
+    particleColor: Palette.armoredPremium,
+    isSpecial: false, // It's not a screen-clearing special, it's a high-point normal balloon equivalent
   );
 
   const BalloonType({

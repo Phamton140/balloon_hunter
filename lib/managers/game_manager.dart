@@ -3,6 +3,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import '../models/game_state.dart';
 import '../models/game_event.dart';
 import 'audio_manager.dart';
@@ -12,6 +13,30 @@ import 'timer_manager.dart';
 import 'ranking_manager.dart';
 import 'event_manager.dart';
 import 'save_manager.dart';
+import 'auth_manager.dart';
+import 'friends_manager.dart';
+import 'cloud_sync_manager.dart';
+import '../models/score_record.dart';
+
+class SyncConflictData {
+  final int localMaxLevel;
+  final int localBestScore;
+  final int cloudMaxLevel;
+  final int cloudBestScore;
+  final Map<String, dynamic>? localRecordMap;
+  final Map<String, dynamic>? cloudRecordMap;
+
+  SyncConflictData({
+    required this.localMaxLevel,
+    required this.localBestScore,
+    required this.cloudMaxLevel,
+    required this.cloudBestScore,
+    this.localRecordMap,
+    this.cloudRecordMap,
+  });
+}
+
+enum SyncChoice { local, cloud }
 
 /// Gestor central que coordina todos los subsistemas del juego.
 /// Mantiene el estado global y la lógica de transición entre pantallas.
@@ -24,6 +49,9 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     required this.rankingManager,
     required this.eventManager,
     required this.saveManager,
+    required this.cloudSyncManager,
+    required this.authManager,
+    required this.friendsManager,
   }) {
     WidgetsBinding.instance.addObserver(this);
   }
@@ -62,8 +90,11 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
   final RankingManager rankingManager;
   final EventManager eventManager;
   final SaveManager saveManager;
+  final CloudSyncManager cloudSyncManager;
+  final AuthManager authManager;
+  final FriendsManager friendsManager;
 
-  // -- Estado del Juego --
+  // -- Estado transitorio --
   GameState _state = GameState.mainMenu;
   GameState get state => _state;
 
@@ -77,12 +108,23 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
   bool slowMotionActive = false;
   double slowMultiplier = 1.0;
   double _slowTimer = 0.0;
-  static const double _slowDuration = 5.0;
+  final double _slowDuration = 5.0;
+  double _playTimeAccumulator = 0.0;
 
   // Callbacks hacia el FlameGame
   VoidCallback? onGameOver;
   VoidCallback? onLevelComplete;
   VoidCallback? onBlackBalloonActivated;
+
+  /// Inicializa todos los gestores
+  Future<void> initialize() async {
+    await saveManager.initialize();
+    await rankingManager.initialize();
+    await authManager.initialize(saveManager);
+    await rankingManager.syncPlayGamesScore(saveManager);
+    _state = GameState.mainMenu;
+    notifyListeners();
+  }
 
   /// Cambia al estado indicado y notifica a la UI
   void changeState(GameState newState) {
@@ -128,16 +170,19 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
   /// Inicia el siguiente nivel
   Future<void> startNextLevel() async {
     levelManager.advanceLevel();
-    // Guarda el progreso de manera persistente al avanzar
-    await saveManager.saveGame(
-      level: levelManager.currentLevel, 
-      score: scoreManager.score,
-    );
     scoreManager.saveLevelStartScore(); // Guarda score inicial para el nuevo nivel
     timerManager.reset();
     timerManager.start();
     _deactivateSlowMotion();
-    changeState(GameState.countdown);
+    changeState(GameState.countdown); // Cambia el estado primero para fluidez visual
+
+    // Guarda el progreso de manera persistente en segundo plano
+    await saveManager.saveGame(
+      level: levelManager.currentLevel, 
+      score: scoreManager.score,
+    );
+    // Sincronizar con la nube en segundo plano
+    cloudSyncManager.syncMaxLevel(saveManager.maxLevelReached);
   }
 
   /// Pausa el juego
@@ -152,22 +197,26 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     if (_state != GameState.paused) return;
     timerManager.start();
     changeState(GameState.playing);
+    await audioManager.resumeBgm();
   }
 
   /// Llama al iniciar un nivel completado
   Future<void> triggerLevelComplete() async {
     timerManager.pause();
+    changeState(GameState.victory); // Mover el cambio de estado antes de las operaciones de red
     
-    // Guarda el progreso de manera persistente al completar un nivel,
-    // preparándolo para el siguiente (currentLevel + 1)
+    // Reproducir sonido inmediatamente
+    audioManager.playLevelUp();
+    onLevelComplete?.call();
+
+    // Guarda el progreso de manera persistente al completar un nivel en segundo plano
     await saveManager.saveGame(
       level: levelManager.currentLevel + 1,
       score: scoreManager.score,
     );
     
-    changeState(GameState.victory);
-    await audioManager.playLevelUp();
-    onLevelComplete?.call();
+    // Sincronizar con la nube en segundo plano
+    cloudSyncManager.syncMaxLevel(saveManager.maxLevelReached);
   }
 
   /// Congela el juego sin cambiar el estado a gameOver (para animaciones)
@@ -182,11 +231,15 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     _isFrozen = false;
     slowMotionActive = false;
     timerManager.pause();
+    
+    changeState(GameState.gameOver); // Detener el juego visualmente de inmediato
+    
+    audioManager.stopBgm();
+    onGameOver?.call();
+
+    // Guardar puntuación y limpiar progreso en segundo plano
     await _saveScore(); // Guarda en el ranking Top 3
     await saveManager.clearSave(); // Borra el progreso del nivel actual
-    changeState(GameState.gameOver);
-    await audioManager.stopBgm();
-    onGameOver?.call();
   }
 
   /// Revive al jugador tras ver un video (reinicia timer y escapes, revierte puntos)
@@ -229,12 +282,27 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     debugPrint('[GameManager] Black balloon activated');
   }
 
-  /// Actualiza el timer del slow motion. Llamar desde game loop.
+  /// Activa el efecto del globo reloj (adelanta el tiempo 5s)
+  void activateClockBalloon() {
+    timerManager.reduceRemainingTime(5.0);
+    // Mostrar feedback en UI si es necesario (el Timer widget podría parpadear)
+  }
+
+  /// Actualiza el timer del slow motion y el tiempo de juego. Llamar desde game loop.
   void update(double dt) {
     if (slowMotionActive) {
       _slowTimer += dt;
       if (_slowTimer >= _slowDuration) {
         _deactivateSlowMotion();
+      }
+    }
+    
+    // Acumular tiempo de juego (solo si está jugando)
+    if (_state == GameState.playing && !isFrozen) {
+      _playTimeAccumulator += dt;
+      if (_playTimeAccumulator >= 5.0) { // Guardar cada 5 segundos para no saturar Hive
+        saveManager.addPlayTime(5);
+        _playTimeAccumulator -= 5.0;
       }
     }
   }
@@ -255,6 +323,53 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     changeState(GameState.mainMenu);
   }
 
+  /// Vincula la cuenta de Google y sincroniza el progreso fusionando los mayores puntajes
+  Future<bool> linkGoogleAccount() async {
+    bool success = await cloudSyncManager.linkGoogleAccount();
+    if (success) {
+      int cloudMaxLevel = (await cloudSyncManager.fetchMaxLevel()) ?? 0;
+      int localMaxLevel = saveManager.maxLevelReached;
+
+      final localRecordMap = saveManager.getPersonalRecord();
+      final localBestScore = (localRecordMap?['score'] as num?)?.toInt() ?? 0;
+
+      await rankingManager.fetchGlobalRanking();
+      final cloudRecordMap = rankingManager.getPersonalRecord();
+      final cloudBestScore = rankingManager.getBestScore();
+
+      int finalMaxLevel = math.max(cloudMaxLevel, localMaxLevel);
+      int finalBestScore = math.max(cloudBestScore, localBestScore);
+      
+      Map<String, dynamic>? finalRecordMap;
+      if (cloudBestScore > localBestScore && cloudRecordMap != null) {
+        finalRecordMap = cloudRecordMap;
+      } else {
+        finalRecordMap = localRecordMap ?? cloudRecordMap;
+      }
+
+      // 1. Sincronizar hacia Local (Si la nube era mayor)
+      if (finalMaxLevel > localMaxLevel) {
+        await saveManager.saveGame(level: finalMaxLevel, score: 0);
+        await saveManager.clearSave(); // Solo queríamos actualizar el maxLevel
+      }
+      if (finalRecordMap != null && finalBestScore > localBestScore) {
+        await saveManager.savePersonalRecord(finalRecordMap);
+      }
+
+      // 2. Sincronizar hacia la Nube (Si lo local era mayor)
+      if (finalMaxLevel > cloudMaxLevel) {
+        await cloudSyncManager.syncMaxLevel(finalMaxLevel);
+      }
+      if (finalRecordMap != null && finalBestScore > cloudBestScore) {
+        final record = ScoreRecord.fromMap(finalRecordMap);
+        await rankingManager.addRecord(record);
+      }
+
+      notifyListeners();
+    }
+    return success;
+  }
+
   // -- Privado --
 
   void _deactivateSlowMotion() {
@@ -272,5 +387,8 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
       level: levelManager.currentLevel,
     );
     await rankingManager.addRecord(record);
+    
+    // Guardado local a prueba de balas para el récord personal
+    await saveManager.savePersonalRecord(record.toMap());
   }
 }

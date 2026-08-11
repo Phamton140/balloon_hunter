@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../managers/game_manager.dart';
 import '../utils/palette.dart';
+import '../utils/countries.dart';
 
 class SettingsScreen extends StatefulWidget {
   final GameManager gameManager;
@@ -59,6 +60,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 children: [
                   const SizedBox(height: 12),
+                  
+                  _ProfileCard(gameManager: widget.gameManager),
+
+                  const SizedBox(height: 16),
 
                   _SettingCard(
                     icon: Icons.volume_up,
@@ -77,6 +82,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       },
                     ),
                   ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.2),
+
+                  const SizedBox(height: 16),
+
                 ],
               ),
             ),
@@ -140,5 +148,220 @@ class _SettingCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _ProfileCard extends StatefulWidget {
+  final GameManager gameManager;
+  const _ProfileCard({required this.gameManager});
+
+  @override
+  State<_ProfileCard> createState() => _ProfileCardState();
+}
+
+class _ProfileCardState extends State<_ProfileCard> {
+  String _formatTime(int totalSeconds) {
+    int hours = totalSeconds ~/ 3600;
+    int minutes = (totalSeconds % 3600) ~/ 60;
+    int seconds = totalSeconds % 60;
+    if (hours > 0) {
+      return '${hours}h ${minutes}m ${seconds}s';
+    } else if (minutes > 0) {
+      return '${minutes}m ${seconds}s';
+    } else {
+      return '${seconds}s';
+    }
+  }
+
+  void _editProfile() {
+    final auth = widget.gameManager.authManager;
+    final nameCtrl = TextEditingController(text: auth.playerName);
+    String selectedCountry = auth.playerCountryCode;
+    // Si el país no está en la lista, usamos un fallback o lo añadimos temporalmente
+    if (!countryCodes.containsKey(selectedCountry)) {
+      selectedCountry = 'US';
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF2C2C2C),
+          title: Text('Editar Perfil', style: GoogleFonts.fredoka(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                style: GoogleFonts.fredoka(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Nombre de Usuario',
+                  labelStyle: const TextStyle(color: Colors.white54),
+                  enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                  focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: selectedCountry,
+                dropdownColor: const Color(0xFF2C2C2C),
+                style: GoogleFonts.fredoka(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'País',
+                  labelStyle: const TextStyle(color: Colors.white54),
+                  enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                  focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+                ),
+                items: countryCodes.entries.map((e) {
+                  return DropdownMenuItem(
+                    value: e.key,
+                    child: Text('${_getFlag(e.key)} ${e.value}'),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setDialogState(() => selectedCountry = val);
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Cancelar', style: GoogleFonts.fredoka(color: Colors.white54)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF43E97B)),
+              onPressed: () async {
+                if (nameCtrl.text.isNotEmpty) {
+                  await auth.updateProfile(nameCtrl.text.trim(), selectedCountry);
+                  if (mounted) {
+                    setState(() {});
+                    Navigator.pop(ctx);
+                  }
+                }
+              },
+              child: Text('Guardar', style: GoogleFonts.fredoka(color: Colors.black)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAddFriendDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF2C2C2C),
+        title: Text('Añadir Amigo por Código', style: GoogleFonts.fredoka(color: Colors.white)),
+        content: TextField(
+          controller: controller,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            hintText: 'Ej. BHT-X7K9',
+            hintStyle: TextStyle(color: Colors.white54),
+            enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+            focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: Colors.white54))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF43E97B)),
+            onPressed: () async {
+              final success = await widget.gameManager.friendsManager.addFriendByCode(controller.text);
+              if (mounted) {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success ? '¡Amigo añadido con éxito!' : 'Código inválido o ya lo sigues')));
+              }
+            },
+            child: Text('Añadir', style: GoogleFonts.fredoka(color: Colors.black)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getFlag(String countryCode) {
+    if (countryCode.length != 2) return '🏳️';
+    int firstLetter = countryCode.codeUnitAt(0) - 0x41 + 0x1F1E6;
+    int secondLetter = countryCode.codeUnitAt(1) - 0x41 + 0x1F1E6;
+    return String.fromCharCode(firstLetter) + String.fromCharCode(secondLetter);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = widget.gameManager.authManager;
+    final save = widget.gameManager.saveManager;
+
+    return Column(
+      children: [
+        GestureDetector(
+              onTap: _editProfile,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: const BoxDecoration(
+                        color: Colors.white12,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(_getFlag(auth.playerCountryCode), style: const TextStyle(fontSize: 24)),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(auth.playerName, style: GoogleFonts.fredoka(fontSize: 18, color: Colors.white)),
+                          const SizedBox(height: 4),
+                          Text('Tiempo jugado: ${_formatTime(save.totalPlayTimeSeconds)}', style: GoogleFonts.fredoka(fontSize: 12, color: Colors.white54)),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text('Código: ${widget.gameManager.friendsManager.myFriendCode}', style: GoogleFonts.fredoka(fontSize: 12, color: const Color(0xFF43E97B))),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.edit, color: Colors.white38, size: 20),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: _showAddFriendDialog,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.person_add, color: Colors.white, size: 18),
+                    const SizedBox(width: 8),
+                    Text('Añadir Amigo', style: GoogleFonts.fredoka(fontSize: 14, color: Colors.white)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ).animate().fadeIn(delay: 50.ms).slideX(begin: -0.2);
   }
 }

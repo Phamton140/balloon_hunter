@@ -16,11 +16,13 @@ class EnemyDirector {
   double _timeSinceLastBird = 0.0;
   double _timeSinceLastBlue = 0.0;
   double _timeSinceLastBlack = 0.0;
+  double _timeSinceLastClock = 0.0;
 
   // Intervalos mínimos para especiales (segundos)
   static const double _minBirdInterval = 2.0; // Mucho más frecuente
   static const double _minBlueInterval = 30.0;
   static const double _minBlackInterval = 60.0;
+  static const double _minClockInterval = 30.0;
 
   /// Selecciona un tipo de globo normal según las probabilidades del nivel
   BalloonType selectBalloonType(LevelConfig config) {
@@ -42,8 +44,10 @@ class EnemyDirector {
     return false;
   }
 
-  /// ¿Debe aparecer el globo azul especial?
-  bool shouldSpawnBlueBalloon(LevelConfig config) {
+  /// ¿Debe aparecer el globo azul especial? (Desbloqueo: Nivel 5)
+  bool shouldSpawnBlueBalloon(LevelConfig config, int maxLevelReached) {
+    if (maxLevelReached < 10) return false;
+    
     if (_timeSinceLastBlue < _minBlueInterval) return false;
     final roll = _random.nextDouble();
     if (roll < config.blueBalloonProbability) {
@@ -53,12 +57,39 @@ class EnemyDirector {
     return false;
   }
 
-  /// ¿Debe aparecer el globo negro especial?
-  bool shouldSpawnBlackBalloon(LevelConfig config) {
+  /// Determina si debe aparecer un globo blindado en el ciclo actual.
+  bool shouldSpawnArmoredBalloon(LevelConfig config, int maxLevelReached) {
+    if (maxLevelReached < 60) return false;
+    
+    // Podemos reutilizar la probabilidad directamente
+    final roll = _random.nextDouble();
+    if (roll < config.armoredBalloonProbability) {
+      return true;
+    }
+    return false;
+  }
+
+  /// ¿Debe aparecer el globo negro especial? (Desbloqueo: Nivel 10)
+  bool shouldSpawnBlackBalloon(LevelConfig config, int maxLevelReached) {
+    if (maxLevelReached < 30) return false;
+    
     if (_timeSinceLastBlack < _minBlackInterval) return false;
     final roll = _random.nextDouble();
     if (roll < config.blackBalloonProbability) {
       _timeSinceLastBlack = 0.0;
+      return true;
+    }
+    return false;
+  }
+
+  /// ¿Debe aparecer el globo reloj especial? (Desbloqueo: Nivel 15)
+  bool shouldSpawnClockBalloon(LevelConfig config, int maxLevelReached) {
+    if (maxLevelReached < 50) return false;
+    
+    if (_timeSinceLastClock < _minClockInterval) return false;
+    final roll = _random.nextDouble();
+    if (roll < config.clockBalloonProbability) {
+      _timeSinceLastClock = 0.0;
       return true;
     }
     return false;
@@ -77,6 +108,7 @@ class EnemyDirector {
     _timeSinceLastBird += dt;
     _timeSinceLastBlue += dt;
     _timeSinceLastBlack += dt;
+    _timeSinceLastClock += dt;
   }
 
   /// Resetea contadores al iniciar nuevo nivel
@@ -84,6 +116,7 @@ class EnemyDirector {
     _timeSinceLastBird = 0.0;
     _timeSinceLastBlue = _minBlueInterval / 2; // no aparece inmediatamente
     _timeSinceLastBlack = _minBlackInterval / 2;
+    _timeSinceLastClock = _minClockInterval / 2;
     debugPrint('[EnemyDirector] Reset');
   }
 }

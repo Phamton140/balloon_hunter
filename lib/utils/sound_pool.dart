@@ -29,7 +29,10 @@ class SoundPool {
           await _audioManager.playPopBlue();
           break;
         case BalloonType.black:
-          await _audioManager.playPopBlack();
+          // El globo negro tiene su propia lógica en GameManager
+          break;
+        default:
+          await _audioManager.playPopYellow();
           break;
       }
     } catch (e) {

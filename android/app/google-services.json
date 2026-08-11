@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "925661441666",
+    "project_id": "balloon-hunter-6ae47",
+    "storage_bucket": "balloon-hunter-6ae47.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:925661441666:android:ca21e4647c6b0ff22c8e9b",
+        "android_client_info": {
+          "package_name": "com.dreamsoftgroup.balloonhunter.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "925661441666-2t4r3ckm2qp0sp7nq19u7snf83qebn3j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dreamsoftgroup.balloonhunter.app",
+            "certificate_hash": "1b97ca319f851a99a75fbc652568e6ec38f1a8a8"
+          }
+        },
+        {
+          "client_id": "925661441666-0scd36q759oaq4hlq1a6t8v44hug3a8t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBfthtL3u9YcqsYZIzGB8DG51luS-IoZfk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "925661441666-0scd36q759oaq4hlq1a6t8v44hug3a8t.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "925661441666-9mb4u5jis92k6a354qoforrup6qdamth.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.balloonhunter.balloonHunter"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

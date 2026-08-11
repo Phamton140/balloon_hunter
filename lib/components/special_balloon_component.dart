@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../models/balloon_type.dart';
 import '../models/game_state.dart';
 import '../utils/constants.dart';
+import '../utils/palette.dart';
 import '../balloon_hunter_game.dart';
 
 /// Componente de globo especial. Aparece brevemente (2-3s) y desaparece solo.
@@ -92,8 +93,10 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
 
     if (_type == BalloonType.blue) {
       _renderBlueBalloon(canvas, alpha);
-    } else {
+    } else if (_type == BalloonType.black) {
       _renderBlackBalloon(canvas, alpha);
+    } else if (_type == BalloonType.clock) {
+      _renderClockBalloon(canvas, alpha);
     }
 
     canvas.restore();
@@ -188,15 +191,26 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
   }
 
   void _renderBlackBalloon(Canvas canvas, double alpha) {
-    // Dibujar la base idéntica a los globos normales, pero negro/morado oscuro
-    _renderBaseBalloon(canvas, const Color(0xFF141821), const Color(0xFF9B59B6), alpha);
+    // Dibujar la base (Negro con borde rojo/neón)
+    _renderBaseBalloon(canvas, Palette.balloonBlack, Palette.balloonBlackGlow, alpha);
 
     // Dibujar SOLO el ícono de la Bomba adentro del globo
     final bombY = 4.0;
     final bombRadius = size.x * 0.25;
 
-    // Esfera
-    canvas.drawCircle(Offset(0, bombY), bombRadius, Paint()..color = const Color(0xFF111111).withOpacity(alpha));
+    // Esfera negra
+    canvas.drawCircle(Offset(0, bombY), bombRadius, Paint()..color = const Color(0xFF000000).withOpacity(alpha));
+    
+    // Borde blanco sutil para separar la bomba del fondo negro del globo
+    canvas.drawCircle(
+      Offset(0, bombY), 
+      bombRadius, 
+      Paint()
+        ..color = Colors.white.withOpacity(0.4 * alpha)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5,
+    );
+
     // Cuello
     canvas.drawRect(
       Rect.fromLTWH(-6, bombY - bombRadius - 6, 12, 6),
@@ -217,6 +231,41 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
     );
     // Chispa
     canvas.drawCircle(Offset(8, bombY - bombRadius - 16), 3, Paint()..color = const Color(0xFFFF9900).withOpacity(alpha));
+  }
+
+  void _renderClockBalloon(Canvas canvas, double alpha) {
+    // Dibujar la base (Ahora es de color Negro)
+    _renderBaseBalloon(canvas, Palette.balloonClock, Palette.balloonClockGlow, alpha);
+
+    // Dibujar el reloj interno
+    final clockY = 4.0;
+    final clockRadius = size.x * 0.22;
+
+    // Fondo del reloj (blanco/amarillo claro)
+    canvas.drawCircle(Offset(0, clockY), clockRadius, Paint()..color = const Color(0xFFFFFDE7).withOpacity(alpha));
+    // Borde del reloj (dorado)
+    canvas.drawCircle(
+      Offset(0, clockY),
+      clockRadius,
+      Paint()
+        ..color = const Color(0xFFFBC02D).withOpacity(alpha)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3.0,
+    );
+    // Aguja de la hora (corta)
+    final hourHand = Path()
+      ..moveTo(0, clockY)
+      ..lineTo(clockRadius * 0.4, clockY + clockRadius * 0.2);
+    canvas.drawPath(hourHand, Paint()..color = const Color(0xFF333333).withOpacity(alpha)..style = PaintingStyle.stroke..strokeWidth = 2.5..strokeCap = StrokeCap.round);
+    
+    // Aguja de los minutos (larga y girando con el pulso)
+    final minHand = Path()
+      ..moveTo(0, clockY)
+      ..lineTo(sin(_pulseTime) * clockRadius * 0.7, clockY - cos(_pulseTime) * clockRadius * 0.7);
+    canvas.drawPath(minHand, Paint()..color = const Color(0xFFD32F2F).withOpacity(alpha)..style = PaintingStyle.stroke..strokeWidth = 2.0..strokeCap = StrokeCap.round);
+
+    // Centro
+    canvas.drawCircle(Offset(0, clockY), 2.5, Paint()..color = const Color(0xFF333333).withOpacity(alpha));
   }
 
   @override

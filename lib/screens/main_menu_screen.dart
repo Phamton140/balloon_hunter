@@ -1,6 +1,8 @@
 // lib/screens/main_menu_screen.dart
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../managers/game_manager.dart';
@@ -11,6 +13,7 @@ class MainMenuScreen extends StatefulWidget {
   final VoidCallback? onResume;
   final VoidCallback? onRanking;
   final VoidCallback? onSettings;
+  final VoidCallback? onCollection;
   const MainMenuScreen({
     super.key,
     required this.gameManager,
@@ -18,6 +21,7 @@ class MainMenuScreen extends StatefulWidget {
     this.onResume,
     this.onRanking,
     this.onSettings,
+    this.onCollection,
   });
 
   @override
@@ -48,7 +52,6 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
       const Color(0xAA00B4D8),
     ];
     
-    // Generar globos iniciales repartidos por la pantalla
     for (int i = 0; i < 8; i++) {
       _balloons.add(_MenuBalloonData(
         _rnd.nextDouble(),
@@ -66,10 +69,8 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
     _tickerController.addListener(() {
       setState(() {
         for (final b in _balloons) {
-          b.y -= b.speed * 0.016; // Movimiento hacia arriba
-          
+          b.y -= b.speed * 0.016; 
           if (b.y < -0.2) {
-             // Reset al fondo
              b.y = 1.2;
              b.x = _rnd.nextDouble();
              b.speed = 0.1 + _rnd.nextDouble() * 0.3;
@@ -90,10 +91,10 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.black, // Para rellenar el espacio sobrante
+        color: Colors.black,
         image: DecorationImage(
           image: AssetImage('assets/images/menu_bg.png'),
-          fit: BoxFit.cover, // Ajuste perfecto para vertical 9:16
+          fit: BoxFit.cover,
           alignment: Alignment.center,
         ),
       ),
@@ -106,44 +107,103 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
               size: Size.infinite,
             ),
             
-            // Contenido principal (Botones, ya que el título está en la imagen)
+            // Icono de Ajustes (Top Right)
+            Positioned(
+              top: 16,
+              right: 16,
+              child: GestureDetector(
+                onTap: () => widget.onSettings?.call(),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.3),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white24, width: 1),
+                  ),
+                  child: const Icon(Icons.settings, color: Colors.white, size: 28),
+                ),
+              ).animate().fadeIn(delay: 200.ms).scale(),
+            ),
+
+            // Contenido Central
             Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                const Spacer(flex: 5), // Empuja los botones mucho más abajo
-                
-                // Play button
-                _MenuButton(
-                  label: '🎈 JUGAR',
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF43E97B), Color(0xFF38F9D7)],
-                  ),
+                const Spacer(), // Empuja TODO hacia abajo lo máximo posible
+
+                // Gran botón JUGAR
+                GestureDetector(
                   onTap: _handlePlayTap,
-                ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2),
-                
-                const SizedBox(height: 16),
-                
-                // Records button
-                _MenuButton(
-                  label: '🏆 RÉCORDS',
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFFD700), Color(0xFFFFA000)],
+                  child: Container(
+                    width: 260,
+                    height: 85,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF43E97B), Color(0xFF38F9D7)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(45),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF43E97B).withOpacity(0.5),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                      border: Border.all(color: Colors.white.withOpacity(0.6), width: 2),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'JUGAR',
+                        style: GoogleFonts.fredoka(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 2,
+                          shadows: [const Shadow(color: Colors.black45, blurRadius: 8, offset: Offset(0, 2))],
+                        ),
+                      ),
+                    ),
                   ),
-                  onTap: () => widget.onRanking?.call(),
-                ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2),
-                
-                const SizedBox(height: 16),
-                
-                // Settings button
-                _MenuButton(
-                  label: '⚙️ AJUSTES',
-                  gradient: LinearGradient(
-                    colors: [Colors.grey.shade600, Colors.grey.shade800],
+                ).animate(onPlay: (controller) => controller.repeat(reverse: true))
+                 .scaleXY(begin: 1.0, end: 1.05, duration: 1200.ms, curve: Curves.easeInOutSine),
+
+                const SizedBox(height: 20),
+
+                // Botones pequeños de Progreso y Ranking
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _GlassButton(
+                          icon: Icons.star_rounded,
+                          label: 'PROGRESO',
+                          color: const Color(0xFFFFD600),
+                          onTap: () => widget.onCollection?.call(),
+                        ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _GlassButton(
+                          icon: Icons.leaderboard_rounded,
+                          label: 'RANKING',
+                          color: const Color(0xFF00B4D8),
+                          onTap: () => widget.onRanking?.call(),
+                        ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2),
+                      ),
+                    ],
                   ),
-                  onTap: () => widget.onSettings?.call(),
-                ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2),
-                
-                const Spacer(flex: 1), // Espacio abajo
+                ),
+
+                const SizedBox(height: 20),
+
+                // Tarjeta de Google Play (pegada al fondo)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                  child: _GooglePlayCard(gameManager: widget.gameManager).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2),
+                ),
               ],
             ),
           ],
@@ -191,6 +251,186 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
   }
 }
 
+class _GooglePlayCard extends StatefulWidget {
+  final GameManager gameManager;
+  const _GooglePlayCard({required this.gameManager});
+
+  @override
+  State<_GooglePlayCard> createState() => _GooglePlayCardState();
+}
+
+class _GooglePlayCardState extends State<_GooglePlayCard> {
+  @override
+  Widget build(BuildContext context) {
+    final cloud = widget.gameManager.cloudSyncManager;
+    final isLinked = cloud.isGoogleLinked;
+    final user = cloud.currentUser;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+        child: GestureDetector(
+          onTap: () async {
+            if (isLinked) {
+              final bool? disconnect = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  backgroundColor: const Color(0xFF202020),
+                  title: Text('Desconectar Cuenta', style: GoogleFonts.fredoka(color: Colors.white)),
+                  content: const Text('¿Estás seguro de que quieres desconectar tu cuenta de Google?', style: TextStyle(color: Colors.white70)),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar', style: TextStyle(color: Colors.white54))),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      child: const Text('Desconectar', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              );
+              
+              if (disconnect == true && mounted) {
+                await widget.gameManager.cloudSyncManager.signOutGoogle();
+                setState(() {});
+              }
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
+            ),
+            child: Row(
+              children: [
+                // Avatar
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                  image: isLinked && user?.photoURL != null
+                      ? DecorationImage(image: NetworkImage(user!.photoURL!), fit: BoxFit.cover)
+                      : null,
+                ),
+                child: (isLinked && user?.photoURL != null)
+                    ? null
+                    : Icon(Icons.person, color: Colors.white.withOpacity(0.7), size: 28),
+              ),
+              const SizedBox(width: 12),
+              
+              // Textos
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isLinked) ...[
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              user?.displayName ?? 'Jugador Conectado',
+                              style: GoogleFonts.fredoka(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFF43E97B), shape: BoxShape.circle)),
+                        ],
+                      ),
+                      Text('Progreso protegido en la nube', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
+                    ] else ...[
+                      Text('Protege tu progreso', style: GoogleFonts.fredoka(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500)),
+                      Text('Conecta tu cuenta para no perder nada.', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
+                    ],
+                  ],
+                ),
+              ),
+
+              // Botones de Conectar (solo si no está vinculado)
+              if (!isLinked)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    GestureDetector(
+                      onTap: () async {
+                        bool success = await widget.gameManager.linkGoogleAccount();
+                        if (success && mounted) {
+                          setState(() {});
+                        }
+                      },
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: const FaIcon(FontAwesomeIcons.google, color: Color(0xFFDB4437), size: 22),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+}
+
+class _GlassButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _GlassButton({required this.icon, required this.label, required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: color, size: 32),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  style: GoogleFonts.fredoka(
+                    fontSize: 16,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _MenuBalloonsPainter extends CustomPainter {
   final List<_MenuBalloonData> balloons;
   _MenuBalloonsPainter(this.balloons);
@@ -202,19 +442,15 @@ class _MenuBalloonsPainter extends CustomPainter {
       final x = b.x * size.width;
       final y = b.y * size.height;
       
-      // Cuerpo del globo
       canvas.drawOval(Rect.fromCenter(center: Offset(x, y), width: 40, height: 52), paint);
       
-      // Brillo especular
-      final highlightPaint = Paint()..color = Colors.white.withValues(alpha: 0.4);
+      final highlightPaint = Paint()..color = Colors.white.withOpacity(0.4);
       canvas.drawOval(Rect.fromCenter(center: Offset(x - 8, y - 10), width: 10, height: 16), highlightPaint);
 
-      // Nudo
       canvas.drawCircle(Offset(x, y + 26), 5, paint);
       
-      // Hilo
       final stringPaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.3)
+        ..color = Colors.white.withOpacity(0.3)
         ..strokeWidth = 1.5
         ..style = PaintingStyle.stroke;
         
@@ -230,54 +466,4 @@ class _MenuBalloonsPainter extends CustomPainter {
   
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
-class _MenuButton extends StatelessWidget {
-  final String label;
-  final LinearGradient gradient;
-  final VoidCallback onTap;
-
-  const _MenuButton({required this.label, required this.gradient, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    // Hacemos el gradiente semi-transparente para ver el fondo
-    final transparentGradient = LinearGradient(
-      colors: gradient.colors.map((c) => c.withValues(alpha: 0.75)).toList(),
-      begin: gradient.begin,
-      end: gradient.end,
-    );
-    
-    return GestureDetector(
-      onTap: onTap,
-      child: Center(
-        child: Container(
-          width: 240,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            gradient: transparentGradient,
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: gradient.colors.first.withValues(alpha: 0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: GoogleFonts.fredoka(
-                fontSize: 20,
-                color: Colors.white,
-                shadows: [const Shadow(color: Colors.black26, blurRadius: 4)],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }

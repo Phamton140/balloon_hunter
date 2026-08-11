@@ -46,6 +46,16 @@ class TimerManager extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Adelanta el tiempo (reduce el tiempo restante)
+  void reduceRemainingTime(double seconds) {
+    if (!_running || isTimeUp) return;
+    _elapsed += seconds;
+    if (_elapsed >= GameConstants.levelDuration) {
+      _elapsed = GameConstants.levelDuration; // Esto dejará remaining en 0 y provocará isTimeUp
+    }
+    notifyListeners();
+  }
+
   /// Tiempo restante formateado como MM:SS
   String get formattedRemaining {
     final secs = remaining.ceil();

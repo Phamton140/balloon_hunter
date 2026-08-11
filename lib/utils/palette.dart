@@ -14,8 +14,20 @@ class Palette {
   static const Color balloonRedGlow = Color(0xFFFF6B81);
   static const Color balloonBlue = Color(0xFF00B4D8);
   static const Color balloonBlueGlow = Color(0xFF90E0EF);
-  static const Color balloonBlack = Color(0xFF2D1B69);
-  static const Color balloonBlackGlow = Color(0xFF9B59B6);
+  // -- Globo Bomba (Negro con borde rojo/neón) --
+  static const Color balloonBlack = Color(0xFF1E1E1E); 
+  static const Color balloonBlackGlow = Color(0xFFFF0055); 
+
+  // -- Globo Reloj (Blanco) --
+  static const Color balloonClock = Color(0xFFF5F5F5); 
+  static const Color balloonClockGlow = Color(0xFFB0BEC5);
+  static const Color particleClock = Color(0xFFF9A826); 
+
+  // -- Globo Blindado --
+  static const Color armoredPremium = Color(0xFFE2E8F0); // Plateado brillante
+  static const Color armoredPremiumGlow = Color(0xFFFFFFFF);
+  static const Color armoredDamaged = Color(0xFF757575); // Gris oscuro dañado
+  static const Color armoredDamagedGlow = Color(0xFF9E9E9E);
 
   // -- Partículas de explosión por tipo --
   static const Color particleYellow = Color(0xFFFFD600);

@@ -42,6 +42,18 @@ class LevelConfig {
     return 0.006; // ~0.6% por ciclo → aprox 1 cada 90-120s
   }
 
+  /// Probabilidad de que aparezca el globo reloj especial.
+  double get clockBalloonProbability {
+    return 0.020; // ~2.0% por ciclo
+  }
+
+  /// Probabilidad de que aparezca un globo blindado.
+  double get armoredBalloonProbability {
+    if (level < 60) return 0.0;
+    // Inicia en 3% y sube gradualmente
+    return (0.03 + (level - 60) * 0.002).clamp(0.0, 0.10);
+  }
+
   /// Distribución de probabilidades para globos normales [yellow, green, red].
   List<double> get balloonTypeWeights {
     if (level <= 5) {

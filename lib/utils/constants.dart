@@ -37,7 +37,7 @@ class GameConstants {
   static const double birdSpeedMax = 200.0;
 
   // -- Duración del nivel en segundos --
-  static const double levelDuration = 60.0;
+  static const double levelDuration = 30.0;
 
   // -- Interfaz de Usuario --
   static const double hudHeight = 80.0; // Altura del HUD superior (compacto medio)
@@ -91,4 +91,11 @@ class GameConstants {
   static const String overlayCountdown = 'countdown';
   static const String overlayReviveReady = 'reviveReady';
   static const String overlayHud = 'hud';
+  static const String overlayCollection = 'collection';
+
+  // -- Play Games Services --
+  static const String leaderboardGlobalId = 'CgkIgt3irfgaEAIQAQ';
+
+  // -- Facebook Login --
+  static const String facebookAppId = '2112244923023404';
 }

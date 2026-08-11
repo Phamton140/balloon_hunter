@@ -29,4 +29,7 @@ enum GameState {
 
   /// Esperando a que el jugador pulse Continuar tras revivir
   reviveReady,
+
+  /// Mostrando la galería de desbloqueos
+  collection,
 }

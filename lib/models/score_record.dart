@@ -49,6 +49,28 @@ class ScoreRecord extends HiveObject {
         maxCombo: 0,
       );
 
+  Map<String, dynamic> toMap() {
+    return {
+      'score': score,
+      'level': level,
+      'date': date.toIso8601String(),
+      'balloonsDestroyed': balloonsDestroyed,
+      'accuracy': accuracy,
+      'maxCombo': maxCombo,
+    };
+  }
+
+  factory ScoreRecord.fromMap(Map<String, dynamic> map) {
+    return ScoreRecord(
+      score: map['score']?.toInt() ?? 0,
+      level: map['level']?.toInt() ?? 1,
+      date: map['date'] != null ? DateTime.parse(map['date']) : DateTime.now(),
+      balloonsDestroyed: map['balloonsDestroyed']?.toInt() ?? 0,
+      accuracy: map['accuracy']?.toDouble() ?? 0.0,
+      maxCombo: map['maxCombo']?.toInt() ?? 0,
+    );
+  }
+
   @override
   String toString() =>
       'ScoreRecord(score: $score, level: $level, accuracy: ${accuracy.toStringAsFixed(1)}%, maxCombo: $maxCombo)';

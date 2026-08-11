@@ -4,12 +4,13 @@
 import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import '../balloon_hunter_game.dart';
 
 enum TimeOfDayCategory { morning, afternoon, night }
 
 /// Fondo del juego con imagen de cielo que cambia dinámicamente según la hora local
 /// y varía el tema paisajístico dependiendo del día del año.
-class BackgroundComponent extends PositionComponent with HasGameReference {
+class BackgroundComponent extends PositionComponent with HasGameReference<BalloonHunterGame> {
   final List<List<Sprite>> _themeSprites = [[], [], []];
   
   final List<_Cloud> _clouds = [];
@@ -75,11 +76,21 @@ class BackgroundComponent extends PositionComponent with HasGameReference {
     }
   }
 
-  /// Calcula un índice (0, 1 o 2) dependiendo del día del año.
+  /// Calcula un índice (0, 1 o 2) dependiendo del día del año y de los temas desbloqueados.
   int _getThemeForToday() {
     final now = DateTime.now();
     final dayOfYear = int.parse(now.difference(DateTime(now.year, 1, 1, 0, 0)).inDays.toString());
-    return dayOfYear % 3;
+    
+    int maxLevel = game.gameManager.saveManager.maxLevelReached;
+    int availableThemes = 1; // Por defecto solo Tema 1
+    
+    if (maxLevel >= 14) {
+      availableThemes = 3; // Tema 1, 2 y 3
+    } else if (maxLevel >= 7) {
+      availableThemes = 2; // Tema 1 y 2
+    }
+    
+    return dayOfYear % availableThemes;
   }
 
   TimeOfDayCategory _getTimeOfDayCategory() {

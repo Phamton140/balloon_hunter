@@ -8,6 +8,7 @@ import '../components/balloon_component.dart';
 import '../components/special_balloon_component.dart';
 import '../components/bird_component.dart';
 import '../components/explosion_component.dart';
+import '../components/armored_balloon_component.dart';
 import '../models/balloon_type.dart';
 import '../utils/constants.dart';
 
@@ -50,6 +51,7 @@ class SpawnManager {
 
   // Pools de objetos
   late final ObjectPool<BalloonComponent> _balloonPool;
+  late final ObjectPool<ArmoredBalloonComponent> _armoredPool;
   late final ObjectPool<BirdComponent> _birdPool;
   late final ObjectPool<ExplosionComponent> _explosionPool;
 
@@ -75,6 +77,10 @@ class SpawnManager {
       factory: () => BalloonComponent(),
       initialSize: GameConstants.poolSizeBalloons,
     );
+    _armoredPool = ObjectPool<ArmoredBalloonComponent>(
+      factory: () => ArmoredBalloonComponent(),
+      initialSize: 5, // No need for a large pool, they are rare
+    );
     _birdPool = ObjectPool<BirdComponent>(
       factory: () => BirdComponent(),
       initialSize: GameConstants.poolSizeBirds,
@@ -96,6 +102,20 @@ class SpawnManager {
         (_getScreenWidth() - GameConstants.balloonWidth);
     final y = _getScreenHeight() + GameConstants.balloonHeight;
     balloon.configure(type: type, x: x, y: y, pool: _balloonPool);
+    if (balloon.parent == null) {
+      _addToGame(balloon);
+    }
+    return balloon;
+  }
+
+  /// Spawnea un globo blindado
+  ArmoredBalloonComponent spawnArmoredBalloon() {
+    assert(_initialized);
+    final balloon = _armoredPool.acquire();
+    final x = _random.nextDouble() *
+        (_getScreenWidth() - GameConstants.balloonWidth);
+    final y = _getScreenHeight() + GameConstants.balloonHeight;
+    balloon.configure(x: x, y: y, pool: _armoredPool);
     if (balloon.parent == null) {
       _addToGame(balloon);
     }

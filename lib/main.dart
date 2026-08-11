@@ -19,11 +19,21 @@ import 'screens/ranking_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/victory_screen.dart';
 import 'screens/revive_ready_screen.dart';
+import 'screens/collection_screen.dart';
 import 'utils/constants.dart';
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await AdManager().initialize();
+  await Hive.initFlutter();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  // Initialize AdManager without awaiting to avoid blocking the first frame
+  AdManager().initialize();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -107,6 +117,7 @@ class _GameScreenState extends State<_GameScreen> {
       GameConstants.overlaySettings,
       GameConstants.overlayCountdown,
       GameConstants.overlayReviveReady,
+      GameConstants.overlayCollection,
     ];
 
     switch (state) {
@@ -138,6 +149,9 @@ class _GameScreenState extends State<_GameScreen> {
       case GameState.reviveReady:
         _showOnly(allOverlays, GameConstants.overlayReviveReady);
         break;
+      case GameState.collection:
+        _showOnly(allOverlays, GameConstants.overlayCollection);
+        break;
     }
   }
 
@@ -162,6 +176,19 @@ class _GameScreenState extends State<_GameScreen> {
           Expanded(
             child: GameWidget<BalloonHunterGame>.controlled(
               gameFactory: () => _game,
+              loadingBuilder: (context) => Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(color: Color(0xFF43E97B)),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Cargando...',
+                      style: GoogleFonts.fredoka(color: Colors.white, fontSize: 18),
+                    ),
+                  ],
+                ),
+              ),
               overlayBuilderMap: {
         // -- Menú principal --
         GameConstants.overlayMainMenu: (context, game) => MainMenuScreen(
@@ -178,6 +205,14 @@ class _GameScreenState extends State<_GameScreen> {
                   game.gameManager.changeState(GameState.ranking),
               onSettings: () =>
                   game.gameManager.changeState(GameState.settings),
+              onCollection: () =>
+                  game.gameManager.changeState(GameState.collection),
+            ),
+
+        // -- Colección --
+        GameConstants.overlayCollection: (context, game) => CollectionScreen(
+              gameManager: game.gameManager,
+              onBack: () => game.gameManager.goToMenu(),
             ),
 
         // -- HUD en juego --
@@ -237,8 +272,12 @@ class _GameScreenState extends State<_GameScreen> {
         // -- Ranking --
         GameConstants.overlayRanking: (context, game) => RankingScreen(
               gameManager: game.gameManager,
-              onPlay: () async {
+              onNewGame: () async {
                 await game.gameManager.startNewGame();
+                game.startGame();
+              },
+              onResume: () async {
+                await game.gameManager.continueSavedGame();
                 game.startGame();
               },
               onBack: () => game.gameManager.goToMenu(),

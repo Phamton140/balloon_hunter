@@ -84,14 +84,21 @@ class AdManager extends ChangeNotifier {
         onAdLoaded: (ad) {
           debugPrint('[AdManager] Banner ad loaded successfully.');
           _isBannerAdLoaded = true;
+          _isLoadingBanner = false;
           notifyListeners();
         },
         onAdFailedToLoad: (ad, error) {
-          debugPrint('[AdManager] Banner ad failed to load: $error');
+          debugPrint('[AdManager] Banner ad failed to load: $error. Retrying in 10s...');
           ad.dispose();
           _isBannerAdLoaded = false;
           _isLoadingBanner = false;
           notifyListeners();
+          
+          Future.delayed(const Duration(seconds: 10), () {
+            if (!_isBannerAdLoaded) {
+              loadBannerAd(context);
+            }
+          });
         },
       ),
     );
@@ -112,10 +119,15 @@ class AdManager extends ChangeNotifier {
           notifyListeners();
         },
         onAdFailedToLoad: (LoadAdError error) {
-          debugPrint('[AdManager] Rewarded ad failed to load: $error');
+          debugPrint('[AdManager] Rewarded ad failed to load: $error. Retrying in 5 seconds...');
           _rewardedAd = null;
           _isRewardedAdLoaded = false;
           notifyListeners();
+          
+          // Reintentar cargar después de 5 segundos
+          Future.delayed(const Duration(seconds: 5), () {
+            if (!_isRewardedAdLoaded) loadRewardedAd();
+          });
         },
       ),
     );

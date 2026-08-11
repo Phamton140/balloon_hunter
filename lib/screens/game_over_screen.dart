@@ -7,9 +7,9 @@ import '../managers/game_manager.dart';
 import '../managers/ad_manager.dart';
 import '../utils/palette.dart';
 
-class GameOverScreen extends StatelessWidget {
+class GameOverScreen extends StatefulWidget {
   final GameManager gameManager;
-  final bool birdHit; // true si fue por tocar un ave
+  final bool birdHit;
   final VoidCallback? onPlayAgain;
   final VoidCallback? onRevive;
   final VoidCallback? onMenu;
@@ -24,9 +24,27 @@ class GameOverScreen extends StatelessWidget {
   });
 
   @override
+  State<GameOverScreen> createState() => _GameOverScreenState();
+}
+
+class _GameOverScreenState extends State<GameOverScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Reintentar cargar el anuncio si no está listo al abrir esta pantalla
+    if (!AdManager().isRewardedAdLoaded) {
+      AdManager().loadRewardedAd();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final gameManager = widget.gameManager;
     // Si NO fue por dejar escapar 3 globos, entonces fue por chocar un pájaro.
     final birdHit = !gameManager.levelManager.isGameOver;
+    final onPlayAgain = widget.onPlayAgain;
+    final onRevive = widget.onRevive;
+    final onMenu = widget.onMenu;
     
     final score = gameManager.scoreManager.score;
     final level = gameManager.levelManager.currentLevel;
