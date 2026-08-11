@@ -34,29 +34,33 @@ class FriendsManager extends ChangeNotifier {
   }
 
   Future<void> _initializeUserDoc() async {
-    final uid = _authManager.playerId;
-    final docRef = _firestore.collection('users').doc(uid);
-    final doc = await docRef.get();
+    try {
+      final uid = _authManager.playerId;
+      final docRef = _firestore.collection('users').doc(uid);
+      final doc = await docRef.get();
 
-    if (!doc.exists) {
-      _myFriendCode = _generateRandomCode();
-      await docRef.set({
-        'friendCode': _myFriendCode,
-        'friendsList': [],
-        'facebookId': _authManager.facebookId,
-      });
-      _friendIds = [];
-    } else {
-      final data = doc.data()!;
-      _myFriendCode = data['friendCode'] ?? _generateRandomCode();
-      if (data['friendCode'] == null) {
-        await docRef.update({'friendCode': _myFriendCode});
+      if (!doc.exists) {
+        _myFriendCode = _generateRandomCode();
+        await docRef.set({
+          'friendCode': _myFriendCode,
+          'friendsList': [],
+          'facebookId': _authManager.facebookId,
+        });
+        _friendIds = [];
+      } else {
+        final data = doc.data()!;
+        _myFriendCode = data['friendCode'] ?? _generateRandomCode();
+        if (data['friendCode'] == null) {
+          await docRef.update({'friendCode': _myFriendCode});
+        }
+        if (data['facebookId'] != _authManager.facebookId && _authManager.facebookId != null) {
+          await docRef.update({'facebookId': _authManager.facebookId});
+        }
+        
+        _friendIds = List<String>.from(data['friendsList'] ?? []);
       }
-      if (data['facebookId'] != _authManager.facebookId && _authManager.facebookId != null) {
-        await docRef.update({'facebookId': _authManager.facebookId});
-      }
-      
-      _friendIds = List<String>.from(data['friendsList'] ?? []);
+    } catch (e) {
+      if (_myFriendCode == null) _myFriendCode = _generateRandomCode();
     }
     notifyListeners();
   }

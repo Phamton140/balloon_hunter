@@ -174,9 +174,14 @@ class RankingScreen extends StatelessWidget {
     return Column(
       children: [
         const SizedBox(height: 20),
-        const Text('👤', style: TextStyle(fontSize: 40)),
-        const SizedBox(height: 10),
-        Text('Tus Mejores Puntuaciones', style: GoogleFonts.fredoka(fontSize: 20, color: Colors.white)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('👤', style: TextStyle(fontSize: 40)),
+            const SizedBox(width: 10),
+            Text('Récord Personal', style: GoogleFonts.fredoka(fontSize: 20, color: Colors.white)),
+          ],
+        ),
         const SizedBox(height: 20),
         _buildTableHeader(showCountry: false),
         Expanded(
@@ -257,15 +262,28 @@ class RankingScreen extends StatelessWidget {
     return Column(
       children: [
         const SizedBox(height: 20),
-        Text(headerEmoji, style: const TextStyle(fontSize: 40)),
-        const SizedBox(height: 10),
-        Text(headerText, style: GoogleFonts.fredoka(fontSize: 20, color: Colors.white)),
-        if (type == 'amigos') ...[
-          const SizedBox(height: 8),
-          Text('Tu código: ${gameManager.friendsManager.myFriendCode}', style: GoogleFonts.fredoka(fontSize: 14, color: const Color(0xFF43E97B))),
-          const SizedBox(height: 16),
-          _buildFriendsHeader(context),
-        ],
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(headerEmoji, style: const TextStyle(fontSize: 40)),
+            const SizedBox(width: 10),
+            Text(headerText, style: GoogleFonts.fredoka(fontSize: 20, color: Colors.white)),
+            if (type == 'amigos') ...[
+              const SizedBox(width: 16),
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF43E97B).withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.person_add_alt_1, color: Color(0xFF43E97B)),
+                  onPressed: () => _showAddFriendCodeDialog(context),
+                  tooltip: 'Tu código: ${gameManager.friendsManager.myFriendCode}\nAñadir amigo',
+                ),
+              ),
+            ],
+          ],
+        ),
         const SizedBox(height: 20),
         _buildTableHeader(showCountry: true),
         Expanded(

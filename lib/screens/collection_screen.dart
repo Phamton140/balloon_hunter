@@ -98,6 +98,31 @@ class CollectionScreen extends StatelessWidget {
                   children: [
                     _buildSectionTitle('Recompensas por Nivel'),
                     ...visibleItems,
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white12, width: 1),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.auto_awesome, color: Colors.amber, size: 28),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'A medida que alcances niveles más altos, descubrirás nuevas sorpresas y retos. ¡Sigue cazando!',
+                              style: GoogleFonts.fredoka(
+                                fontSize: 14,
+                                color: Colors.white70,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
