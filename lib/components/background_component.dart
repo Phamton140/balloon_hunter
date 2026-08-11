@@ -36,9 +36,9 @@ class BackgroundComponent extends PositionComponent with HasGameReference<Balloo
     try {
       // Tema 1: Naturaleza estándar
       _themeSprites[0] = [
-        await Sprite.load('bg_morning.png'),
-        await Sprite.load('bg_afternoon.png'),
-        await Sprite.load('bg_night.png'),
+        await Sprite.load('bg_morning.jpg'),
+        await Sprite.load('bg_afternoon.jpg'),
+        await Sprite.load('bg_night.jpg'),
       ];
 
       // Tema 2: Desierto

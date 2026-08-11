@@ -28,7 +28,7 @@ class CollectionScreen extends StatelessWidget {
     final maxLevel = gameManager.saveManager.maxLevelReached;
 
     final allItems = [
-      _ItemConfig(1, (cl) => _buildThemeItem(name: 'Tema 1: Naturaleza', requiredLevel: 1, currentLevel: cl, previewAsset: 'assets/images/bg_afternoon.png')),
+      _ItemConfig(1, (cl) => _buildThemeItem(name: 'Tema 1: Naturaleza', requiredLevel: 1, currentLevel: cl, previewAsset: 'assets/images/bg_afternoon.jpg')),
       _ItemConfig(10, (cl) => _buildBalloonItem(name: 'Globo de Hielo', description: 'Ralentiza el tiempo temporalmente.', requiredLevel: 10, currentLevel: cl, type: BalloonType.blue)),
       _ItemConfig(20, (cl) => _buildThemeItem(name: 'Tema 2: Desierto', requiredLevel: 20, currentLevel: cl, previewAsset: 'assets/images/bg_afternoon_2.jpg')),
       _ItemConfig(30, (cl) => _buildBalloonItem(name: 'Globo Bomba', description: 'Explota todos los globos en pantalla.', requiredLevel: 30, currentLevel: cl, type: BalloonType.black)),

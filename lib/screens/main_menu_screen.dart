@@ -105,7 +105,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
         decoration: const BoxDecoration(
           color: Colors.black,
           image: DecorationImage(
-            image: AssetImage('assets/images/menu_bg.png'),
+            image: AssetImage('assets/images/menu_bg.jpg'),
             fit: BoxFit.cover,
             alignment: Alignment.center,
           ),
