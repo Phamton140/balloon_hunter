@@ -7,6 +7,7 @@ import '../managers/game_manager.dart';
 import '../models/score_record.dart';
 import '../utils/palette.dart';
 import '../utils/constants.dart';
+import '../managers/save_manager.dart';
 
 class RankingScreen extends StatelessWidget {
   final GameManager gameManager;
@@ -24,10 +25,14 @@ class RankingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = gameManager.saveManager.currentTheme;
+
     return DefaultTabController(
       length: 4,
       child: Container(
-        decoration: const BoxDecoration(gradient: Palette.menuGradient),
+        decoration: const BoxDecoration(
+          gradient: Palette.menuGradient,
+        ),
         child: SafeArea(
           child: Column(
             children: [
@@ -184,7 +189,7 @@ class RankingScreen extends StatelessWidget {
                 record: record,
                 position: i + 1,
                 playerName: gameManager.authManager.isLoggedIn ? gameManager.authManager.playerName : 'Tú',
-                isCurrentUser: true,
+                isCurrentUser: false,
                 isEven: i % 2 == 0,
               ).animate(delay: Duration(milliseconds: i * 50)).fadeIn().slideX(begin: -0.2);
             },
@@ -472,10 +477,10 @@ class _TableRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: isCurrentUser 
-            ? Palette.balloonBlue.withOpacity(0.2) 
-            : (isEven ? Colors.white.withOpacity(0.05) : Colors.transparent),
+            ? Palette.balloonBlue.withValues(alpha: 0.2) 
+            : (isEven ? Colors.white.withValues(alpha: 0.05) : Colors.transparent),
         border: isCurrentUser 
-            ? Border.symmetric(horizontal: BorderSide(color: Palette.balloonBlue.withOpacity(0.8), width: 1.5))
+            ? Border.symmetric(horizontal: BorderSide(color: Palette.balloonBlue.withValues(alpha: 0.8), width: 1.5))
             : null,
       ),
       child: Row(
@@ -508,7 +513,7 @@ class _TableRow extends StatelessWidget {
                         style: GoogleFonts.fredoka(
                           fontSize: 16, 
                           color: isCurrentUser ? Colors.white : Colors.white70,
-                          fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal
+                          fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

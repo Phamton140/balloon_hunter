@@ -20,6 +20,7 @@ import 'screens/settings_screen.dart';
 import 'screens/victory_screen.dart';
 import 'screens/revive_ready_screen.dart';
 import 'screens/collection_screen.dart';
+import 'screens/registration_screen.dart';
 import 'utils/constants.dart';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -118,9 +119,13 @@ class _GameScreenState extends State<_GameScreen> {
       GameConstants.overlayCountdown,
       GameConstants.overlayReviveReady,
       GameConstants.overlayCollection,
+      GameConstants.overlayRegistration,
     ];
 
     switch (state) {
+      case GameState.registration:
+        _showOnly(allOverlays, GameConstants.overlayRegistration);
+        break;
       case GameState.mainMenu:
         _showOnly(allOverlays, GameConstants.overlayMainMenu);
         break;
@@ -230,7 +235,12 @@ class _GameScreenState extends State<_GameScreen> {
         // -- Colección --
         GameConstants.overlayCollection: (context, game) => CollectionScreen(
               gameManager: game.gameManager,
-              onBack: () => game.gameManager.goToMenu(),
+              onBack: () => game.gameManager.changeState(GameState.mainMenu),
+            ),
+
+        GameConstants.overlayRegistration: (context, game) => RegistrationScreen(
+              gameManager: game.gameManager,
+              onRegistered: () => game.gameManager.changeState(GameState.mainMenu),
             ),
 
         // -- HUD en juego --
@@ -324,7 +334,6 @@ class _GameScreenState extends State<_GameScreen> {
               },
             ),
       },
-              initialActiveOverlays: const [GameConstants.overlayMainMenu],
             ),
           ),
           // Banner Ad at the bottom

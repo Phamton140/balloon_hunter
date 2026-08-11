@@ -31,14 +31,7 @@ class AuthManager extends ChangeNotifier {
     _playerCountryCode = saveManager.playerCountryCode;
     
     if (_playerCountryCode == null) {
-      try {
-        _playerCountryCode = ui.PlatformDispatcher.instance.locale.countryCode;
-      } catch (e) {
-        _playerCountryCode = "US";
-      }
-      if (_playerCountryCode == null || _playerCountryCode!.isEmpty) {
-        _playerCountryCode = "US";
-      }
+      _playerCountryCode = "DO";
       // Guardar el detectado
       await saveManager.saveProfile(name: _playerName!, countryCode: _playerCountryCode!);
     }

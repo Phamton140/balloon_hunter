@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:math' as math;
 import '../managers/game_manager.dart';
+import '../managers/save_manager.dart';
 
 class MainMenuScreen extends StatefulWidget {
   final GameManager gameManager;
@@ -92,6 +94,8 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    final theme = widget.gameManager.saveManager.currentTheme;
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -192,20 +196,34 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
                     width: 260,
                     height: 85,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF43E97B), Color(0xFF38F9D7)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                      color: theme == AppTheme.wood ? null : null, // Fallback
+                      gradient: theme != AppTheme.wood 
+                        ? const LinearGradient(
+                            colors: [Color(0xFF43E97B), Color(0xFF38F9D7)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ) 
+                        : null,
+                      image: theme == AppTheme.wood 
+                        ? const DecorationImage(
+                            image: AssetImage('assets/images/ui/wood_bg.jpg'),
+                            fit: BoxFit.cover,
+                            colorFilter: ColorFilter.mode(Color(0xFFE53935), BlendMode.hardLight),
+                          )
+                        : null,
                       borderRadius: BorderRadius.circular(45),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF43E97B).withOpacity(0.5),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                      border: Border.all(color: Colors.white.withOpacity(0.6), width: 2),
+                      boxShadow: theme == AppTheme.wood 
+                          ? const [BoxShadow(color: Color(0x66000000), offset: Offset(0, 6), blurRadius: 0)]
+                          : [
+                              BoxShadow(
+                                color: const Color(0xFF43E97B).withValues(alpha: 0.5),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                      border: theme == AppTheme.wood 
+                          ? Border.all(color: const Color(0xFF3E2723), width: 4)
+                          : Border.all(color: Colors.white.withValues(alpha: 0.6), width: 2),
                     ),
                     child: Center(
                       child: Text(
@@ -215,7 +233,9 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                           letterSpacing: 2,
-                          shadows: [const Shadow(color: Colors.black45, blurRadius: 8, offset: Offset(0, 2))],
+                          shadows: theme == AppTheme.wood 
+                              ? const [Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 3))]
+                              : const [Shadow(color: Colors.black45, blurRadius: 8, offset: Offset(0, 2))],
                         ),
                       ),
                     ),
@@ -234,7 +254,9 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
                         child: _GlassButton(
                           icon: Icons.star_rounded,
                           label: 'PROGRESO',
-                          color: const Color(0xFFFFD600),
+                          color: const Color(0xFF43E97B),
+                          theme: theme,
+                          woodAsset: 'assets/images/ui/btn_wood_green.jpg',
                           onTap: () => widget.onCollection?.call(),
                         ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2),
                       ),
@@ -244,6 +266,8 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
                           icon: Icons.leaderboard_rounded,
                           label: 'RANKING',
                           color: const Color(0xFF00B4D8),
+                          theme: theme,
+                          woodAsset: 'assets/images/ui/btn_wood_blue.jpg',
                           onTap: () => widget.onRanking?.call(),
                         ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2),
                       ),
@@ -450,13 +474,10 @@ class _GooglePlayCardState extends State<_GooglePlayCard> {
     final cloud = widget.gameManager.cloudSyncManager;
     final isLinked = cloud.isGoogleLinked;
     final user = cloud.currentUser;
+    final theme = widget.gameManager.saveManager.currentTheme;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-        child: GestureDetector(
-          onTap: () async {
+    final cardContent = GestureDetector(
+      onTap: () async {
             if (isLinked) {
               final bool? disconnect = await showDialog<bool>(
                 context: context,
@@ -484,9 +505,21 @@ class _GooglePlayCardState extends State<_GooglePlayCard> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
+              color: theme == AppTheme.wood ? null : Colors.white.withValues(alpha: 0.1),
+              image: theme == AppTheme.wood 
+                  ? const DecorationImage(
+                      image: AssetImage('assets/images/ui/wood_bg.jpg'),
+                      fit: BoxFit.cover,
+                      colorFilter: ColorFilter.mode(Color(0xFFFFB300), BlendMode.hardLight),
+                    )
+                  : null,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
+              border: theme == AppTheme.wood 
+                  ? Border.all(color: const Color(0xFF3E2723), width: 3)
+                  : Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
+              boxShadow: theme == AppTheme.wood 
+                  ? const [BoxShadow(color: Color(0x66000000), offset: Offset(0, 4), blurRadius: 0)]
+                  : null,
             ),
             child: Row(
               children: [
@@ -519,7 +552,12 @@ class _GooglePlayCardState extends State<_GooglePlayCard> {
                           Flexible(
                             child: Text(
                               user?.displayName ?? 'Jugador Conectado',
-                              style: GoogleFonts.fredoka(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+                              style: GoogleFonts.fredoka(
+                                color: Colors.white, 
+                                fontSize: 16, 
+                                fontWeight: FontWeight.w500,
+                                shadows: theme == AppTheme.wood ? const [Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 2))] : null,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -528,10 +566,32 @@ class _GooglePlayCardState extends State<_GooglePlayCard> {
                           Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFF43E97B), shape: BoxShape.circle)),
                         ],
                       ),
-                      Text('Progreso protegido en la nube', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
+                      Text(
+                        'Progreso protegido en la nube', 
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9), 
+                          fontSize: 12,
+                          shadows: theme == AppTheme.wood ? const [Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 2))] : null,
+                        )
+                      ),
                     ] else ...[
-                      Text('Protege tu progreso', style: GoogleFonts.fredoka(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500)),
-                      Text('Conecta tu cuenta para no perder nada.', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
+                      Text(
+                        'Protege tu progreso', 
+                        style: GoogleFonts.fredoka(
+                          color: Colors.white, 
+                          fontSize: 16, 
+                          fontWeight: FontWeight.w500,
+                          shadows: theme == AppTheme.wood ? const [Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 2))] : null,
+                        )
+                      ),
+                      Text(
+                        'Conecta tu cuenta para no perder nada.', 
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9), 
+                          fontSize: 12,
+                          shadows: theme == AppTheme.wood ? const [Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 2))] : null,
+                        )
+                      ),
                     ],
                   ],
                 ),
@@ -552,12 +612,18 @@ class _GooglePlayCardState extends State<_GooglePlayCard> {
                       child: Container(
                         width: 44,
                         height: 44,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           color: Colors.white,
                           shape: BoxShape.circle,
+                          boxShadow: theme == AppTheme.wood ? const [BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2))] : null,
                         ),
                         alignment: Alignment.center,
-                        child: const FaIcon(FontAwesomeIcons.google, color: Color(0xFFDB4437), size: 22),
+                        child: FaIcon(
+                          FontAwesomeIcons.google, 
+                          color: const Color(0xFFDB4437), 
+                          size: 22,
+                          shadows: theme == AppTheme.wood ? const [Shadow(color: Colors.black45, blurRadius: 2, offset: Offset(0, 1))] : null,
+                        ),
                       ),
                     ),
                   ],
@@ -565,52 +631,81 @@ class _GooglePlayCardState extends State<_GooglePlayCard> {
             ],
           ),
         ),
-      ),
-    ),
-  );
-}
+      );
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: theme == AppTheme.wood 
+          ? cardContent
+          : BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+              child: cardContent,
+            ),
+    );
+  }
 }
 
 class _GlassButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
+  final AppTheme theme;
+  final String? woodAsset;
   final VoidCallback onTap;
 
-  const _GlassButton({required this.icon, required this.label, required this.color, required this.onTap});
+  const _GlassButton({required this.icon, required this.label, required this.color, required this.theme, this.woodAsset, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final buttonContent = Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: theme == AppTheme.wood ? null : color.withValues(alpha: 0.15),
+        image: theme == AppTheme.wood 
+            ? DecorationImage(
+                image: const AssetImage('assets/images/ui/wood_bg.jpg'),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(color, BlendMode.hardLight),
+              )
+            : null,
+        borderRadius: BorderRadius.circular(20),
+        border: theme == AppTheme.wood 
+            ? Border.all(color: const Color(0xFF3E2723), width: 3)
+            : Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
+        boxShadow: theme == AppTheme.wood 
+            ? const [BoxShadow(color: Color(0x66000000), offset: Offset(0, 4), blurRadius: 0)]
+            : null,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: theme == AppTheme.wood ? Colors.white : color, size: 32),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: GoogleFonts.fredoka(
+              fontSize: 16, 
+              color: Colors.white, 
+              fontWeight: FontWeight.bold,
+              shadows: theme == AppTheme.wood 
+                 ? const [Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 2))]
+                 : null,
+            ),
+          ),
+        ],
+      ),
+    );
+
     return GestureDetector(
       onTap: onTap,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: color.withOpacity(0.3), width: 1.5),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, color: color, size: 32),
-                const SizedBox(height: 8),
-                Text(
-                  label,
-                  style: GoogleFonts.fredoka(
-                    fontSize: 16,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        child: theme == AppTheme.wood 
+            ? buttonContent
+            : BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
+                child: buttonContent,
+              ),
       ),
     );
   }

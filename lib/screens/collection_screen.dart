@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../managers/game_manager.dart';
+import '../managers/save_manager.dart';
 import '../utils/palette.dart';
 import '../components/balloon_widget.dart';
 import '../models/balloon_type.dart';
@@ -50,7 +51,9 @@ class CollectionScreen extends StatelessWidget {
     final visibleItems = allItems.take(visibleCount).map((c) => c.builder(maxLevel)).toList();
 
     return Container(
-      decoration: const BoxDecoration(gradient: Palette.menuGradient),
+      decoration: const BoxDecoration(
+        gradient: Palette.menuGradient,
+      ),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -135,10 +138,10 @@ class CollectionScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isUnlocked ? color.withOpacity(0.2) : Colors.white.withOpacity(0.05),
+        color: isUnlocked ? color.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isUnlocked ? color.withOpacity(0.5) : Colors.white12,
+          color: isUnlocked ? color.withValues(alpha: 0.5) : Colors.white12,
           width: 2,
         ),
       ),
@@ -202,7 +205,7 @@ class CollectionScreen extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isUnlocked ? Colors.green.withOpacity(0.5) : Colors.white12,
+          color: isUnlocked ? Colors.green.withValues(alpha: 0.5) : Colors.white12,
           width: 2,
         ),
         image: isUnlocked
@@ -210,12 +213,12 @@ class CollectionScreen extends StatelessWidget {
                 image: AssetImage(previewAsset),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(0.3),
+                  Colors.black.withValues(alpha: 0.3),
                   BlendMode.darken,
                 ),
               )
             : null,
-        color: isUnlocked ? null : Colors.white.withOpacity(0.05),
+        color: isUnlocked ? null : Colors.white.withValues(alpha: 0.05),
       ),
       child: Center(
         child: Column(

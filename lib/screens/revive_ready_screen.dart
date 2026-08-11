@@ -18,7 +18,7 @@ class ReviveReadyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black.withOpacity(0.7),
+      color: Colors.black.withValues(alpha: 0.7),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -53,7 +53,7 @@ class ReviveReadyScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                      color: Palette.balloonGreen.withOpacity(0.4),
+                      color: Palette.balloonGreen.withValues(alpha: 0.4),
                       blurRadius: 15,
                       offset: const Offset(0, 6),
                     )

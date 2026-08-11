@@ -125,7 +125,16 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     await rankingManager.initialize();
     await authManager.initialize(saveManager);
     await rankingManager.syncPlayGamesScore(saveManager);
-    _state = GameState.mainMenu;
+    if (!saveManager.hasRegistered) {
+      _state = GameState.registration;
+    } else {
+      _state = GameState.mainMenu;
+    }
+    notifyListeners();
+  }
+
+  /// Fuerza una actualización de la UI
+  void forceUpdate() {
     notifyListeners();
   }
 

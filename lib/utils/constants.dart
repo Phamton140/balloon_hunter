@@ -92,6 +92,7 @@ class GameConstants {
   static const String overlayReviveReady = 'reviveReady';
   static const String overlayHud = 'hud';
   static const String overlayCollection = 'collection';
+  static const String overlayRegistration = 'registration';
 
   // -- Play Games Services --
   static const String leaderboardGlobalId = 'CgkIgt3irfgaEAIQAQ';

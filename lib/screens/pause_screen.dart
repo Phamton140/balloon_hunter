@@ -160,10 +160,23 @@ class _PauseButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: color.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ],
         ),
         child: Center(
-          child: Text(label, style: GoogleFonts.fredoka(fontSize: 18, color: Colors.white)),
+          child: Text(
+            label, 
+            style: GoogleFonts.fredoka(
+              fontSize: 18, 
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
       ),
     );

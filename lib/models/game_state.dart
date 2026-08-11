@@ -6,6 +6,9 @@ enum GameState {
   /// Mostrando el menú principal
   mainMenu,
 
+  /// Pantalla de registro de usuario
+  registration,
+
   /// Partida en curso
   playing,
 

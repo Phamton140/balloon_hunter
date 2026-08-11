@@ -4,6 +4,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+enum AppTheme { wood, modern }
+
 class SaveManager {
   static const String _boxName = 'balloon_hunter_save';
   Box? _box;
@@ -36,6 +38,21 @@ class SaveManager {
   int get savedLevel => _box?.get('level', defaultValue: 1) ?? 1;
   int get savedScore => _box?.get('score', defaultValue: 0) ?? 0;
   
+  bool get hasRegistered => _box?.get('hasRegistered', defaultValue: false) ?? false;
+  
+  AppTheme get currentTheme {
+    final themeStr = _box?.get('theme', defaultValue: 'wood') as String;
+    return themeStr == 'modern' ? AppTheme.modern : AppTheme.wood;
+  }
+
+  Future<void> setHasRegistered(bool value) async {
+    await _box?.put('hasRegistered', value);
+  }
+
+  Future<void> setTheme(AppTheme theme) async {
+    await _box?.put('theme', theme.name);
+  }
+
   /// Nivel máximo histórico alcanzado por el jugador (para desbloqueos)
   int get maxLevelReached => _box?.get('maxLevel', defaultValue: 0) ?? 0;
 

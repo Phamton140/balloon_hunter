@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../managers/game_manager.dart';
+import '../managers/save_manager.dart';
 import '../utils/palette.dart';
 import '../utils/countries.dart';
 
@@ -25,9 +26,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final audio = widget.gameManager.audioManager;
+    final theme = widget.gameManager.saveManager.currentTheme;
 
     return Container(
-      decoration: const BoxDecoration(gradient: Palette.menuGradient),
+      decoration: const BoxDecoration(
+        gradient: Palette.menuGradient,
+      ),
       child: SafeArea(
         child: Column(
           children: [
@@ -95,7 +99,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.2),
 
                   const SizedBox(height: 16),
-
                 ],
               ),
             ),
@@ -128,7 +131,7 @@ class _SettingCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.07),
+        color: Colors.white.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white12),
       ),
@@ -152,8 +155,8 @@ class _SettingCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: GoogleFonts.fredoka(fontSize: 15, color: Colors.white)),
-                    Text(subtitle, style: GoogleFonts.fredoka(fontSize: 12, color: Colors.white38)),
+                    Text(title, style: GoogleFonts.fredoka(fontSize: 16, color: Colors.white)),
+                    Text(subtitle, style: const TextStyle(fontSize: 13, color: Colors.white70)),
                   ],
                 ),
               ),
@@ -169,6 +172,7 @@ class _SettingCard extends StatelessWidget {
 
 class _ProfileCard extends StatefulWidget {
   final GameManager gameManager;
+  
   const _ProfileCard({required this.gameManager});
 
   @override
@@ -187,85 +191,6 @@ class _ProfileCardState extends State<_ProfileCard> {
     } else {
       return '${seconds}s';
     }
-  }
-
-  void _editProfile() {
-    final auth = widget.gameManager.authManager;
-    final nameCtrl = TextEditingController(text: auth.playerName);
-    String selectedCountry = auth.playerCountryCode;
-    // Si el país no está en la lista, usamos un fallback o lo añadimos temporalmente
-    if (!countryCodes.containsKey(selectedCountry)) {
-      selectedCountry = 'US';
-    }
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: const Color(0xFF2C2C2C),
-          title: Text('Editar Perfil', style: GoogleFonts.fredoka(color: Colors.white)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                maxLength: 13,
-                style: GoogleFonts.fredoka(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Nombre de Usuario',
-                  labelStyle: const TextStyle(color: Colors.white54),
-                  enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
-                  focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-                  counterStyle: const TextStyle(color: Colors.white54),
-                ),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: selectedCountry,
-                dropdownColor: const Color(0xFF2C2C2C),
-                style: GoogleFonts.fredoka(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'País',
-                  labelStyle: const TextStyle(color: Colors.white54),
-                  enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
-                  focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-                ),
-                items: countryCodes.entries.map((e) {
-                  return DropdownMenuItem(
-                    value: e.key,
-                    child: Text('${_getFlag(e.key)} ${e.value}'),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) {
-                    setDialogState(() => selectedCountry = val);
-                  }
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text('Cancelar', style: GoogleFonts.fredoka(color: Colors.white54)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF43E97B)),
-              onPressed: () async {
-                if (nameCtrl.text.isNotEmpty) {
-                  await auth.updateProfile(nameCtrl.text.trim(), selectedCountry);
-                  if (mounted) {
-                    setState(() {});
-                    Navigator.pop(ctx);
-                  }
-                }
-              },
-              child: Text('Guardar', style: GoogleFonts.fredoka(color: Colors.black)),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   void _showAddFriendDialog() {
@@ -317,47 +242,37 @@ class _ProfileCardState extends State<_ProfileCard> {
 
     return Column(
       children: [
-        GestureDetector(
-              onTap: _editProfile,
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.07),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.07),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: const BoxDecoration(
+                  color: Colors.white12,
+                  shape: BoxShape.circle,
                 ),
-                child: Row(
+                child: Text(_getFlag(auth.playerCountryCode), style: const TextStyle(fontSize: 24)),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: const BoxDecoration(
-                        color: Colors.white12,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(_getFlag(auth.playerCountryCode), style: const TextStyle(fontSize: 24)),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(auth.playerName, style: GoogleFonts.fredoka(fontSize: 18, color: Colors.white)),
-                          const SizedBox(height: 4),
-                          Text('Tiempo jugado: ${_formatTime(save.totalPlayTimeSeconds)}', style: GoogleFonts.fredoka(fontSize: 12, color: Colors.white54)),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Text('Código: ${widget.gameManager.friendsManager.myFriendCode}', style: GoogleFonts.fredoka(fontSize: 12, color: const Color(0xFF43E97B))),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Icon(Icons.edit, color: Colors.white38, size: 20),
+                    Text(auth.playerName, style: GoogleFonts.fredoka(fontSize: 18, color: Colors.white)),
+                    Text('Tiempo jugado: ${_formatTime(save.totalPlayTimeSeconds)}', style: const TextStyle(fontSize: 13, color: Colors.white70)),
+                    Text('Código: ${widget.gameManager.friendsManager.myFriendCode}', style: const TextStyle(fontSize: 13, color: Color(0xFF43E97B))),
                   ],
                 ),
               ),
-            ),
+            ],
+          ),
+        ),
       ],
     );
   }

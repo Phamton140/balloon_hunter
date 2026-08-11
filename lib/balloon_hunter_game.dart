@@ -84,13 +84,12 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
   Future<void> onLoad() async {
     // 1. Inicializar componentes asíncronos de los gestores
     await audioManager.initialize();
-    await saveManager.initialize();
     
-    // Iniciar de forma asíncrona sin bloquear la pantalla de carga principal
-    // porque pueden tardar mucho o fallar si no hay internet
-    rankingManager.initialize();
+    // Inicializar el GameManager (que a su vez inicializa saveManager, authManager, etc.)
+    await gameManager.initialize();
+    
+    // Iniciar sincronización en la nube en segundo plano
     cloudSyncManager.initialize();
-    authManager.initialize(saveManager);
     
     // Configurar observador del ciclo de vida para Flame
     // No necesitamos LifecycleListener porque la app principal lo maneja
@@ -117,8 +116,12 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
     background = BackgroundComponent();
     add(background);
 
-    // 7. Mostrar menú principal
-    overlays.add(GameConstants.overlayMainMenu);
+    // 7. Mostrar la pantalla inicial según el estado
+    if (gameManager.state == GameState.registration) {
+      overlays.add(GameConstants.overlayRegistration);
+    } else {
+      overlays.add(GameConstants.overlayMainMenu);
+    }
   }
 
   // ==========================================================================
