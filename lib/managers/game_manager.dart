@@ -183,12 +183,16 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     if (authManager.isLoggedIn) {
       try {
         debugPrint('[GameManager] Intentando borrar leaderboard para ${authManager.playerId}...');
-        await FirebaseFirestore.instance
+        // Lanzamos el borrado sin 'await' (fire-and-forget) para que no se congele 
+        // esperando al servidor si la conexión a internet está inestable.
+        FirebaseFirestore.instance
             .collection('leaderboard')
             .doc(authManager.playerId)
             .delete();
-        debugPrint('[GameManager] Leaderboard doc eliminado.');
-        await cloudSyncManager.syncMaxLevel(1);
+        debugPrint('[GameManager] Leaderboard doc eliminado (solicitud enviada).');
+        
+        // Igual con el nivel máximo
+        cloudSyncManager.syncMaxLevel(1);
       } catch (e) {
         debugPrint('[GameManager] Error wiping cloud data: $e');
       }
