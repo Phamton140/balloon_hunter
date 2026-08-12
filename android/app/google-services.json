@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "925661441666-80gm5unibdepmmthdnjcce16aos0qbb3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dreamsoftgroup.balloonhunter.app",
+            "certificate_hash": "4addb83a40062db057e458495f04906618973bb4"
+          }
+        },
+        {
           "client_id": "925661441666-0scd36q759oaq4hlq1a6t8v44hug3a8t.apps.googleusercontent.com",
           "client_type": 3
         }

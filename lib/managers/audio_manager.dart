@@ -17,6 +17,7 @@ class AudioManager {
   AudioPlayer? _bgmPlayer;
   StreamSubscription? _playerCompleteSubscription;
   final Map<String, AudioPool> _sfxPools = {};
+  bool _isStartingBgm = false;
 
   double get masterVolume => _masterVolume;
 
@@ -126,10 +127,12 @@ class AudioManager {
     final effectiveVolume = _masterVolume * _masterVolume;
     
     if (_masterVolume > 0) {
-      if (_bgmPlayer?.state == PlayerState.playing) {
+      if (_bgmPlayer?.state == PlayerState.playing || _isStartingBgm) {
         await _bgmPlayer?.setVolume(effectiveVolume);
       } else {
+        _isStartingBgm = true;
         await playBgm();
+        _isStartingBgm = false;
       }
     } else {
       await stopBgm();
