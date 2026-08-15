@@ -127,6 +127,7 @@ class _GameScreenState extends State<_GameScreen> {
         _showOnly(allOverlays, GameConstants.overlayRegistration);
         break;
       case GameState.mainMenu:
+        _game.gameManager.audioManager.stopBgm();
         _showOnly(allOverlays, GameConstants.overlayMainMenu);
         break;
       case GameState.playing:

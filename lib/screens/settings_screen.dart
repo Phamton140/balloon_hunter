@@ -23,6 +23,13 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   double _previousVolume = 0.6;
+
+  @override
+  void dispose() {
+    widget.gameManager.audioManager.stopBgm();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final audio = widget.gameManager.audioManager;
@@ -41,7 +48,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => widget.onBack?.call(),
+                    onTap: () {
+                      widget.gameManager.audioManager.stopBgm();
+                      widget.onBack?.call();
+                    },
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
