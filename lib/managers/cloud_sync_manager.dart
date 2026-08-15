@@ -9,7 +9,9 @@ import 'package:flutter/foundation.dart';
 class CloudSyncManager {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: '925661441666-0scd36q759oaq4hlq1a6t8v44hug3a8t.apps.googleusercontent.com',
+  );
 
   User? _currentUser;
   User? get currentUser => _currentUser;
@@ -26,19 +28,22 @@ class CloudSyncManager {
   Future<void> initialize() async {
     if (_isInitialized) return;
     try {
-      // Intentar recuperar sesión actual
+      debugPrint('[AUTH] Inicializando CloudSyncManager...');
       _currentUser = _auth.currentUser;
       
-      // Si no hay sesión en absoluto, iniciar anónimamente por defecto
       if (_currentUser == null) {
+        debugPrint('[AUTH] Iniciando Firebase Auth anónimo...');
         UserCredential userCredential = await _auth.signInAnonymously();
         _currentUser = userCredential.user;
+        debugPrint('[AUTH] Firebase signIn Anónimo resultado: SUCCESS | UID: ${_currentUser?.uid}');
+      } else {
+        debugPrint('[AUTH] Firebase sesión existente detectada | UID: ${_currentUser?.uid} | GoogleLinked: $isGoogleLinked');
       }
       
       _isInitialized = true;
-      debugPrint('[CloudSyncManager] Auth exitoso. UID: ${_currentUser?.uid}, Google: $isGoogleLinked');
+      debugPrint('[AUTH] Estado final CloudSyncManager: ${_currentUser != null ? "CONNECTED" : "DISCONNECTED"} | UID: ${_currentUser?.uid}');
     } catch (e) {
-      debugPrint('[CloudSyncManager] Error de autenticación: $e');
+      debugPrint('[AUTH] Firebase Auth error en initialize: $e');
     }
   }
 
@@ -46,46 +51,61 @@ class CloudSyncManager {
   /// o inicia sesión si ya tenía una cuenta creada.
   Future<bool> linkGoogleAccount() async {
     try {
+      debugPrint('[AUTH] Iniciando flujo Google Sign-In para vincular...');
       GoogleSignInAccount? googleUser;
       try {
         googleUser = await _googleSignIn.signIn();
       } catch (e) {
-        debugPrint('[CloudSyncManager] Google Sign-In cancelado o fallido: $e');
+        debugPrint('[AUTH] Google Sign-In error al abrir ventana: $e');
         return false;
       }
-      if (googleUser == null) return false;
+      if (googleUser == null) {
+        debugPrint('[AUTH] Google Sign-In cancelado por el usuario.');
+        return false;
+      }
 
+      debugPrint('[AUTH] Google Sign-In cuenta seleccionada: ${googleUser.email} (ID: ${googleUser.id})');
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      debugPrint('[AUTH] Google Tokens obtenidos: idToken=${googleAuth.idToken != null ? "PRESENTE (${googleAuth.idToken!.substring(0, 15)}...)" : "NULL"}, accessToken=${googleAuth.accessToken != null ? "PRESENTE" : "NULL"}');
+
       final OAuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
+      debugPrint('[AUTH] Firebase credential creada: YES');
 
       // Si el usuario ya está anónimo, intentamos vincularle la credencial de Google
       if (_currentUser != null && _currentUser!.isAnonymous) {
         try {
-          await _currentUser!.linkWithCredential(credential);
-          debugPrint('[CloudSyncManager] Cuenta vinculada con éxito.');
+          debugPrint('[AUTH] Intentando linkWithCredential en usuario anónimo (${_currentUser!.uid})...');
+          final linkResult = await _currentUser!.linkWithCredential(credential);
+          _currentUser = linkResult.user;
+          debugPrint('[AUTH] Firebase linkWithCredential resultado: SUCCESS | UID: ${_currentUser?.uid}');
+          debugPrint('[AUTH] Estado final: CONNECTED (Google Linked)');
           return true;
         } on FirebaseAuthException catch (e) {
+          debugPrint('[AUTH] FirebaseAuthException en linkWithCredential: ${e.code} - ${e.message}');
           if (e.code == 'credential-already-in-use') {
-            // Si la cuenta de Google ya tenía progreso guardado de otra instalación,
-            // iniciamos sesión directamente (se descarta el progreso anónimo actual en favor de la nube)
-            debugPrint('[CloudSyncManager] La cuenta ya existe. Iniciando sesión directamente...');
+            debugPrint('[AUTH] La credencial ya existe en otro usuario. Iniciando sesión directamente...');
             final userCredential = await _auth.signInWithCredential(credential);
             _currentUser = userCredential.user;
+            debugPrint('[AUTH] Firebase signInWithCredential resultado: SUCCESS | UID: ${_currentUser?.uid}');
+            debugPrint('[AUTH] Estado final: CONNECTED (Google Linked)');
             return true;
           }
         }
       } else {
-        // Si por alguna razón no había usuario, simplemente iniciamos sesión
+        debugPrint('[AUTH] Iniciando sesión directa con credencial Google...');
         final userCredential = await _auth.signInWithCredential(credential);
         _currentUser = userCredential.user;
+        debugPrint('[AUTH] Firebase signInWithCredential resultado: SUCCESS | UID: ${_currentUser?.uid}');
+        debugPrint('[AUTH] Estado final: CONNECTED (Google Linked)');
         return true;
       }
     } catch (e) {
-      debugPrint('[CloudSyncManager] Error vinculando Google: $e');
+      debugPrint('[AUTH] Error vinculando Google: $e');
     }
+    debugPrint('[AUTH] Estado final: FAIL / DISCONNECTED');
     return false;
   }
 

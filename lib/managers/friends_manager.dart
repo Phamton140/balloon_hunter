@@ -36,10 +36,12 @@ class FriendsManager extends ChangeNotifier {
   Future<void> _initializeUserDoc() async {
     try {
       final uid = _authManager.playerId;
+      debugPrint('[FIRESTORE] [Profile] Intentando leer perfil del jugador ($uid)...');
       final docRef = _firestore.collection('users').doc(uid);
       final doc = await docRef.get();
 
       if (!doc.exists) {
+        debugPrint('[FIRESTORE] [Profile] Documento no existe. Creando nuevo perfil...');
         _myFriendCode = _generateRandomCode();
         await docRef.set({
           'friendCode': _myFriendCode,
@@ -47,7 +49,9 @@ class FriendsManager extends ChangeNotifier {
           'facebookId': _authManager.facebookId,
         });
         _friendIds = [];
+        debugPrint('[FIRESTORE] [Profile] Escritura: SUCCESS | FriendCode generado: $_myFriendCode');
       } else {
+        debugPrint('[FIRESTORE] [Profile] Lectura: SUCCESS | Documento encontrado');
         final data = doc.data()!;
         _myFriendCode = data['friendCode'] ?? _generateRandomCode();
         if (data['friendCode'] == null) {
@@ -58,8 +62,10 @@ class FriendsManager extends ChangeNotifier {
         }
         
         _friendIds = List<String>.from(data['friendsList'] ?? []);
+        debugPrint('[FIRESTORE] [Profile] FriendCode activo: $_myFriendCode | Amigos: ${_friendIds.length}');
       }
     } catch (e) {
+      debugPrint('[FIRESTORE] [Profile] Error leyendo/escribiendo perfil: $e');
       if (_myFriendCode == null) _myFriendCode = _generateRandomCode();
     }
     notifyListeners();

@@ -9,7 +9,9 @@ import 'save_manager.dart';
 /// Gestiona la sesión del jugador usando Firebase, Google y Facebook.
 class AuthManager extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: '925661441666-0scd36q759oaq4hlq1a6t8v44hug3a8t.apps.googleusercontent.com',
+  );
   SaveManager? _saveManager;
   
   bool _isLoggedIn = false;
@@ -38,6 +40,7 @@ class AuthManager extends ChangeNotifier {
     }
 
     _auth.authStateChanges().listen((User? user) {
+      debugPrint('[AUTH] AuthStateChanged disparado | User: ${user?.uid} | isAnonymous: ${user?.isAnonymous}');
       if (user != null) {
         _isLoggedIn = true;
         _playerId = user.uid;
@@ -93,19 +96,28 @@ class AuthManager extends ChangeNotifier {
   /// Inicia sesión con Google
   Future<bool> signInWithGoogle() async {
     try {
+      debugPrint('[AUTH] [AuthManager] Iniciando signInWithGoogle...');
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return false; // El usuario canceló
+      if (googleUser == null) {
+        debugPrint('[AUTH] [AuthManager] Google Sign-In cancelado por usuario');
+        return false;
+      }
 
+      debugPrint('[AUTH] [AuthManager] Cuenta Google seleccionada: ${googleUser.email}');
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      debugPrint('[AUTH] [AuthManager] Tokens: idToken=${googleAuth.idToken != null ? "OK" : "NULL"}, accessToken=${googleAuth.accessToken != null ? "OK" : "NULL"}');
+
       final OAuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
+      debugPrint('[AUTH] [AuthManager] Credential creada: YES');
 
-      await _auth.signInWithCredential(credential);
+      final userCredential = await _auth.signInWithCredential(credential);
+      debugPrint('[AUTH] [AuthManager] Firebase signIn resultado: SUCCESS | UID: ${userCredential.user?.uid}');
       return true;
     } catch (e) {
-      debugPrint('[AuthManager] Error en signInWithGoogle: $e');
+      debugPrint('[AUTH] [AuthManager] Error en signInWithGoogle: $e');
       return false;
     }
   }

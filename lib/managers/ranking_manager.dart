@@ -27,9 +27,17 @@ class RankingManager extends ChangeNotifier {
     
     // Iniciar sesión silenciosa en Google Play Games con timeout para evitar cuelgues
     try {
-      await GamesServices.signIn().timeout(const Duration(seconds: 5));
+      debugPrint('[AUTH] [PlayGames] Iniciando Google Play Games auto-signin...');
+      final result = await GamesServices.signIn().timeout(const Duration(seconds: 7));
+      final signedIn = await GamesServices.isSignedIn;
+      debugPrint('[AUTH] [PlayGames] Resultado signIn: $result | isSignedIn: $signedIn');
+      if (signedIn) {
+        final playerId = await GamesServices.getPlayerID();
+        final playerName = await GamesServices.getPlayerName();
+        debugPrint('[AUTH] [PlayGames] Player ID: $playerId | Player Name: $playerName');
+      }
     } catch (e) {
-      debugPrint('[RankingManager] Error auto-signin Play Games: $e');
+      debugPrint('[AUTH] [PlayGames] Error auto-signin Play Games: $e');
     }
   }
 
@@ -84,15 +92,15 @@ class RankingManager extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Intentar obtener datos de la caché primero para rapidez, luego del servidor
+      debugPrint('[FIRESTORE] [Leaderboard] Intentando leer leaderboard global...');
       final snapshot = await _firestore
           .collection('leaderboard')
           .orderBy('score', descending: true)
-          .orderBy('date', descending: false)
           .limit(100)
           .get(const GetOptions(source: Source.serverAndCache))
           .timeout(const Duration(seconds: 8));
 
+      debugPrint('[FIRESTORE] [Leaderboard] Lectura SUCCESS: ${snapshot.docs.length} registros obtenidos');
       _globalScores = snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;

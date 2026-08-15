@@ -605,8 +605,17 @@ class _GooglePlayCardState extends State<_GooglePlayCard> {
                     GestureDetector(
                       onTap: () async {
                         bool success = await widget.gameManager.linkGoogleAccount();
-                        if (success && mounted) {
+                        if (mounted) {
                           setState(() {});
+                          if (success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('¡Cuenta de Google vinculada con éxito!'),
+                                backgroundColor: Color(0xFF43E97B),
+                                duration: Duration(seconds: 3),
+                              ),
+                            );
+                          }
                         }
                       },
                       child: Container(

@@ -45,8 +45,11 @@ class AudioManager {
     }
   }
 
+  bool _shouldPlayBgm = false;
+
   /// Reproduce la música de fondo actual
   Future<void> playBgm() async {
+    _shouldPlayBgm = true;
     if (_masterVolume <= 0) return;
     try {
       if (_bgmPlayer == null) {
@@ -57,7 +60,16 @@ class AudioManager {
       }
       final effectiveVolume = _masterVolume * _masterVolume;
       await _bgmPlayer!.setVolume(effectiveVolume);
+      
+      // Chequeo de seguridad antes de reproducir
+      if (!_shouldPlayBgm) return;
+      
       await _bgmPlayer!.play(AssetSource('audio/${_playlist[_currentSongIndex]}'));
+      
+      // Chequeo de seguridad por si stopBgm se llamó mientras cargaba el asset
+      if (!_shouldPlayBgm) {
+        await _bgmPlayer!.stop();
+      }
     } catch (e) {
       debugPrint('[AudioManager] BGM error: $e');
     }
@@ -93,6 +105,7 @@ class AudioManager {
 
   /// Detiene la música de fondo
   Future<void> stopBgm() async {
+    _shouldPlayBgm = false;
     try {
       await _bgmPlayer?.stop();
     } catch (e) {
