@@ -262,19 +262,27 @@ class RankingScreen extends StatelessWidget {
     return Column(
       children: [
         const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            GestureDetector(
-              onTap: type == 'amigos' ? () => _showAddFriendCodeDialog(context) : null,
-              child: Tooltip(
-                message: type == 'amigos' ? 'Toca para añadir amigo' : '',
-                triggerMode: type == 'amigos' ? TooltipTriggerMode.longPress : TooltipTriggerMode.manual,
-                child: type == 'amigos' 
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: type == 'amigos' ? () => _showAddFriendCodeDialog(context) : null,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: type == 'amigos'
+                ? BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFF43E97B).withValues(alpha: 0.3), width: 1.5),
+                  )
+                : null,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                type == 'amigos' 
                     ? Stack(
                         clipBehavior: Clip.none,
                         children: [
-                          Text(headerEmoji, style: const TextStyle(fontSize: 40)),
+                          Text(headerEmoji, style: const TextStyle(fontSize: 36)),
                           Positioned(
                             bottom: -2,
                             right: -6,
@@ -286,19 +294,22 @@ class RankingScreen extends StatelessWidget {
                               child: const Icon(
                                 Icons.add_circle,
                                 color: Color(0xFF43E97B),
-                                size: 22,
+                                size: 20,
                               ),
                             ).animate(onPlay: (c) => c.repeat(reverse: true))
                              .scale(begin: const Offset(1.0, 1.0), end: const Offset(1.2, 1.2), duration: 800.ms),
                           ),
                         ],
                       )
-                    : Text(headerEmoji, style: const TextStyle(fontSize: 40)),
-              ),
+                    : Text(headerEmoji, style: const TextStyle(fontSize: 36)),
+                const SizedBox(width: 10),
+                Text(
+                  type == 'amigos' ? 'Añadir Amigo / Ranking' : headerText,
+                  style: GoogleFonts.fredoka(fontSize: 20, color: Colors.white, fontWeight: FontWeight.w500),
+                ),
+              ],
             ),
-            const SizedBox(width: 10),
-            Text(headerText, style: GoogleFonts.fredoka(fontSize: 20, color: Colors.white)),
-          ],
+          ),
         ),
         const SizedBox(height: 20),
         _buildTableHeader(showCountry: true),

@@ -505,21 +505,23 @@ class _GooglePlayCardState extends State<_GooglePlayCard> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: theme == AppTheme.wood ? null : Colors.white.withValues(alpha: 0.1),
+              color: theme == AppTheme.wood 
+                  ? const Color(0xFF24160F).withValues(alpha: 0.92)
+                  : const Color(0xFF151428).withValues(alpha: 0.85),
               image: theme == AppTheme.wood 
                   ? const DecorationImage(
                       image: AssetImage('assets/images/ui/wood_bg.jpg'),
                       fit: BoxFit.cover,
-                      colorFilter: ColorFilter.mode(Color(0xFFFFB300), BlendMode.hardLight),
+                      colorFilter: ColorFilter.mode(Color(0xB31F1008), BlendMode.darken),
                     )
                   : null,
               borderRadius: BorderRadius.circular(20),
               border: theme == AppTheme.wood 
-                  ? Border.all(color: const Color(0xFF3E2723), width: 3)
+                  ? Border.all(color: const Color(0xFFD4AF37).withValues(alpha: 0.6), width: 1.5)
                   : Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
-              boxShadow: theme == AppTheme.wood 
-                  ? const [BoxShadow(color: Color(0x66000000), offset: Offset(0, 4), blurRadius: 0)]
-                  : null,
+              boxShadow: const [
+                BoxShadow(color: Color(0x66000000), offset: Offset(0, 4), blurRadius: 8),
+              ],
             ),
             child: Row(
               children: [

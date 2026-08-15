@@ -10,7 +10,7 @@ class AdManager extends ChangeNotifier {
   AdManager._internal();
 
   // MODO DE PRUEBA: Cambiar a false cuando vayas a compilar la versión de producción
-  bool isTestMode = true;
+  bool isTestMode = false;
 
   // -- BANNER AD --
   BannerAd? _bannerAd;

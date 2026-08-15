@@ -108,51 +108,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.2),
 
-                  const SizedBox(height: 16),
-
-                  _SettingCard(
-                    icon: Icons.delete_forever,
-                    title: 'Restablecer Progreso (Modo Pruebas)',
-                    subtitle: 'Borra puntuaciones y nivel, pero mantiene tu usuario',
-                    trailing: ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            backgroundColor: const Color(0xFF2C2C2C),
-                            title: Text('¿Restablecer progreso?', style: GoogleFonts.fredoka(color: Colors.white)),
-                            content: const Text(
-                              'Esto borrará tu récord personal, nivel alcanzado y tiempo de juego de forma irreversible, tanto localmente como en la nube.\n\nTu usuario, código de amigo y amigos seguirán intactos.',
-                              style: TextStyle(color: Colors.white70),
+                  // Solo mostrar la opción de restablecer si es cuenta de desarrollador
+                  if (widget.gameManager.authManager.playerName.trim().toLowerCase() == 'melquisedec' ||
+                      widget.gameManager.authManager.playerName.trim().toLowerCase().startsWith('19_69_') ||
+                      widget.gameManager.authManager.playerName.trim().toLowerCase().startsWith('19_96_')) ...[
+                    _SettingCard(
+                      icon: Icons.delete_forever,
+                      title: 'Restablecer Progreso (Modo Pruebas)',
+                      subtitle: 'Borra puntuaciones y nivel, pero mantiene tu usuario',
+                      trailing: ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              backgroundColor: const Color(0xFF2C2C2C),
+                              title: Text('¿Restablecer progreso?', style: GoogleFonts.fredoka(color: Colors.white)),
+                              content: const Text(
+                                'Esto borrará tu récord personal, nivel alcanzado y tiempo de juego de forma irreversible, tanto localmente como en la nube.\n\nTu usuario, código de amigo y amigos seguirán intactos.',
+                                style: TextStyle(color: Colors.white70),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx), 
+                                  child: const Text('Cancelar', style: TextStyle(color: Colors.white54))
+                                ),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                                  onPressed: () async {
+                                    Navigator.pop(ctx);
+                                    await widget.gameManager.wipeGameData();
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Progreso restablecido.'))
+                                      );
+                                    }
+                                  },
+                                  child: Text('Confirmar', style: GoogleFonts.fredoka(color: Colors.white)),
+                                ),
+                              ],
                             ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx), 
-                                child: const Text('Cancelar', style: TextStyle(color: Colors.white54))
-                              ),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-                                onPressed: () async {
-                                  Navigator.pop(ctx);
-                                  await widget.gameManager.wipeGameData();
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Progreso restablecido.'))
-                                    );
-                                  }
-                                },
-                                child: Text('Confirmar', style: GoogleFonts.fredoka(color: Colors.white)),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      child: Text('BORRAR', style: GoogleFonts.fredoka(color: Colors.white, fontWeight: FontWeight.bold)),
-                    ),
-                  ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.2),
+                          );
+                        },
+                        child: Text('BORRAR', style: GoogleFonts.fredoka(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.2),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
+                  ],
                 ],
               ),
             ),
