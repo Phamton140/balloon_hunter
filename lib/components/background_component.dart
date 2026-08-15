@@ -84,9 +84,9 @@ class BackgroundComponent extends PositionComponent with HasGameReference<Balloo
     int maxLevel = game.gameManager.saveManager.maxLevelReached;
     int availableThemes = 1; // Por defecto solo Tema 1
     
-    if (maxLevel >= 14) {
+    if (maxLevel >= 40) {
       availableThemes = 3; // Tema 1, 2 y 3
-    } else if (maxLevel >= 7) {
+    } else if (maxLevel >= 30) {
       availableThemes = 2; // Tema 1 y 2
     }
     

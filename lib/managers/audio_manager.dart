@@ -2,6 +2,7 @@
 // Gestor de audio: música de fondo y efectos de sonido
 
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flame_audio/flame_audio.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
@@ -12,7 +13,16 @@ class AudioManager {
   double _masterVolume = 0.6; // Valor inicial
 
   // -- Playlist --
-  final List<String> _playlist = ['bgm1.mp3', 'bgm2.mp3', 'bgm3.mp3'];
+  final List<String> _playlist = [
+    'bgm1.mp3',
+    'bgm2.mp3',
+    'bgm3.mp3',
+    'bgm4.mp3',
+    'bgm5.mp3',
+    'bgm6.mp3',
+    'bgm7.mp3',
+    'bgm8.mp3',
+  ];
   int _currentSongIndex = 0;
   AudioPlayer? _bgmPlayer;
   StreamSubscription? _playerCompleteSubscription;
@@ -28,6 +38,11 @@ class AudioManager {
         'bgm1.mp3',
         'bgm2.mp3',
         'bgm3.mp3',
+        'bgm4.mp3',
+        'bgm5.mp3',
+        'bgm6.mp3',
+        'bgm7.mp3',
+        'bgm8.mp3',
         'pop_bubble.mp3',
         'ice.mp3',
         'pop_black.mp3',
@@ -75,8 +90,15 @@ class AudioManager {
     }
   }
 
+  final _random = math.Random();
+
   void _playNextSong() {
-    _currentSongIndex = (_currentSongIndex + 1) % _playlist.length;
+    if (_playlist.length <= 1) return;
+    int nextIndex = _currentSongIndex;
+    while (nextIndex == _currentSongIndex) {
+      nextIndex = _random.nextInt(_playlist.length);
+    }
+    _currentSongIndex = nextIndex;
     playBgm();
   }
 

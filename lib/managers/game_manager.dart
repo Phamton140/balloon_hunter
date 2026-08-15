@@ -153,8 +153,16 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
+  /// Guarda la puntuación final si el juego terminó (para evitar duplicados al revivir)
+  Future<void> finalizeGameOverScore() async {
+    if (_state == GameState.gameOver && scoreManager.score > 0) {
+      await _saveScore();
+    }
+  }
+
   /// Inicia una nueva partida desde el nivel 1
   Future<void> startNewGame() async {
+    await finalizeGameOverScore();
     await saveManager.clearSave();
     scoreManager.reset();
     scoreManager.saveLevelStartScore(); // Guarda score inicial = 0
@@ -165,6 +173,23 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     _deactivateSlowMotion();
     changeState(GameState.countdown);
     await audioManager.playBgm();
+  }
+
+  /// Vuelve al menú principal
+  Future<void> goToMenu() async {
+    await finalizeGameOverScore();
+    await audioManager.stopBgm();
+    _deactivateSlowMotion();
+
+    // Si el usuario decide volver al menú a mitad de una partida, guardamos su progreso
+    if (_state == GameState.paused || _state == GameState.playing) {
+      await saveManager.saveGame(
+        level: levelManager.currentLevel,
+        score: scoreManager.score,
+      );
+    }
+
+    changeState(GameState.mainMenu);
   }
 
   /// Borra todo el progreso del juego (local y nube) para realizar pruebas,
@@ -247,9 +272,13 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
 
   /// Pausa el juego
   Future<void> pauseGame() async {
-    if (_state != GameState.playing) return;
+    if (_state != GameState.playing && _state != GameState.countdown) return;
     timerManager.pause();
     changeState(GameState.paused);
+    await saveManager.saveGame(
+      level: levelManager.currentLevel,
+      score: scoreManager.score,
+    );
   }
 
   /// Reanuda el juego
@@ -297,9 +326,9 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     audioManager.stopBgm();
     onGameOver?.call();
 
-    // Guardar puntuación y limpiar progreso en segundo plano
-    await _saveScore(); // Guarda en el ranking Top 3
-    await saveManager.clearSave(); // Borra el progreso del nivel actual
+    // Nota: NO guardamos el récord aquí para permitir revivir mediante anuncio
+    // sin generar puntuaciones duplicadas en el ranking.
+    await saveManager.clearSave(); // Limpia el estado de partida guardada en nivel activo
   }
 
   /// Revive al jugador tras ver un video (reinicia timer y escapes, revierte puntos)
@@ -367,21 +396,7 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  /// Vuelve al menú principal
-  Future<void> goToMenu() async {
-    await audioManager.stopBgm();
-    _deactivateSlowMotion();
 
-    // Si el usuario decide volver al menú a mitad de una partida, guardamos su progreso
-    if (_state == GameState.paused || _state == GameState.playing) {
-      await saveManager.saveGame(
-        level: levelManager.currentLevel,
-        score: scoreManager.score,
-      );
-    }
-
-    changeState(GameState.mainMenu);
-  }
 
   /// Vincula la cuenta de Google y sincroniza el progreso fusionando los mayores puntajes
   Future<bool> linkGoogleAccount() async {

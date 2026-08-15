@@ -69,9 +69,9 @@ class EnemyDirector {
     return false;
   }
 
-  /// ¿Debe aparecer el globo negro especial? (Desbloqueo: Nivel 10)
+  /// ¿Debe aparecer el globo negro especial? (Desbloqueo: Nivel 20)
   bool shouldSpawnBlackBalloon(LevelConfig config, int maxLevelReached) {
-    if (maxLevelReached < 30) return false;
+    if (maxLevelReached < 20) return false;
     
     if (_timeSinceLastBlack < _minBlackInterval) return false;
     final roll = _random.nextDouble();

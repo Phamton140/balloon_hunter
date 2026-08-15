@@ -30,8 +30,8 @@ class CollectionScreen extends StatelessWidget {
     final allItems = [
       _ItemConfig(1, (cl) => _buildThemeItem(name: 'Tema 1: Naturaleza', requiredLevel: 1, currentLevel: cl, previewAsset: 'assets/images/bg_afternoon.jpg')),
       _ItemConfig(10, (cl) => _buildBalloonItem(name: 'Globo de Hielo', description: 'Ralentiza el tiempo temporalmente.', requiredLevel: 10, currentLevel: cl, type: BalloonType.blue)),
-      _ItemConfig(20, (cl) => _buildThemeItem(name: 'Tema 2: Desierto', requiredLevel: 20, currentLevel: cl, previewAsset: 'assets/images/bg_afternoon_2.jpg')),
-      _ItemConfig(30, (cl) => _buildBalloonItem(name: 'Globo Bomba', description: 'Explota todos los globos en pantalla.', requiredLevel: 30, currentLevel: cl, type: BalloonType.black)),
+      _ItemConfig(20, (cl) => _buildBalloonItem(name: 'Globo Bomba', description: 'Explota todos los globos en pantalla.', requiredLevel: 20, currentLevel: cl, type: BalloonType.black)),
+      _ItemConfig(30, (cl) => _buildThemeItem(name: 'Tema 2: Desierto', requiredLevel: 30, currentLevel: cl, previewAsset: 'assets/images/bg_afternoon_2.jpg')),
       _ItemConfig(40, (cl) => _buildThemeItem(name: 'Tema 3: Colinas', requiredLevel: 40, currentLevel: cl, previewAsset: 'assets/images/bg_afternoon_3.png')),
       _ItemConfig(50, (cl) => _buildBalloonItem(name: 'Globo Reloj', description: 'Resta 5 segundos al temporizador.', requiredLevel: 50, currentLevel: cl, type: BalloonType.clock)),
       _ItemConfig(60, (cl) => _buildBalloonItem(name: 'Globo Blindado', description: 'Requiere 3 toques para explotar.', requiredLevel: 60, currentLevel: cl, type: BalloonType.armored)),
