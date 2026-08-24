@@ -287,7 +287,7 @@ class _GameScreenState extends State<_GameScreen> {
               gameManager: game.gameManager,
               birdHit: game.gameManager.state == GameState.gameOver,
               onPlayAgain: () async {
-                await game.gameManager.startNewGame();
+                await game.gameManager.startNewGame(startLevel: 1);
                 game.startGame();
               },
               onRevive: () async {

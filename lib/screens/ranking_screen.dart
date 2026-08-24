@@ -170,6 +170,15 @@ class RankingScreen extends StatelessWidget {
     } else {
       scoresToDisplay = [rawRecord];
     }
+    // Ordenar por puntuación de mayor a menor (los mejores al inicio)
+    // Empate: quien lo haya logrado primero se coloca antes
+    scoresToDisplay.sort((a, b) {
+      final scoreA = a['score'] as num;
+      final scoreB = b['score'] as num;
+      if (scoreA > scoreB) return -1;
+      if (scoreA < scoreB) return 1;
+      return 0;
+    });
 
     return Column(
       children: [
@@ -236,14 +245,14 @@ class RankingScreen extends StatelessWidget {
     }
     
     if (filteredScores.isEmpty && type != 'amigos') {
-       return Center(
-        child: Text(
-          '¡Sé el primero en conquistar este ranking!',
-          textAlign: TextAlign.center,
-          style: GoogleFonts.fredoka(fontSize: 18, color: Colors.white60),
-        ),
-      );
-    }
+        return Center(
+          child: Text(
+            '¡Sé el primero en conquistar este ranking!',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.fredoka(fontSize: 18, color: Colors.white60),
+          ),
+        );
+      }
 
     final items = <dynamic>[]; 
     final names = <String>[];
