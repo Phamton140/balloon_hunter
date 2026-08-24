@@ -188,6 +188,14 @@ class SpawnManager {
     }
   }
 
+  /// Debilita los escudos de todos los globos blindados activos
+  /// (usado cuando se activa el globo bomba para quitar escudos sin destruirlos)
+  void stripArmoredShields(List<Component> gameChildren) {
+    for (final armored in gameChildren.whereType<ArmoredBalloonComponent>()) {
+      armored.hp = 1;
+    }
+  }
+
   void reset() {
     debugPrint('[SpawnManager] Pool stats - Balloons: ${_balloonPool.availableCount}, Birds: ${_birdPool.availableCount}');
   }

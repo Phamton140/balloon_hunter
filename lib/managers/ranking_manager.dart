@@ -22,7 +22,7 @@ class RankingManager extends ChangeNotifier {
     // Activar persistencia offline de Firestore
     _firestore.settings = const Settings(
       persistenceEnabled: true,
-      cacheSizeBytes: 104857600, // Límite de 100 MB para evitar saturar el teléfono
+      cacheSizeBytes: 10485760, // 10 MB - Evita acumulación masiva de caché en disco
     );
     
     // Iniciar sesión silenciosa en Google Play Games con timeout para evitar cuelgues

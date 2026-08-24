@@ -12,15 +12,21 @@ import '../balloon_hunter_game.dart';
 /// Requiere 3 toques para ser destruido y cambia visualmente por capa.
 class ArmoredBalloonComponent extends PositionComponent
     with TapCallbacks, HasGameReference<BalloonHunterGame> {
-  // Estado interno
+// Estado interno
   int _hp = 3;
   int get hp => _hp;
+  set hp(int value) {
+    _hp = value.clamp(0, 3); // Clamp entre 0 y 3
+  }
 
-  // Propiedades
+// Propiedades
   final BalloonType _type = BalloonType.armored;
   BalloonType get balloonType => _type;
   
   double _speed = 0.0;
+  set speed(double value) {
+    _speed = value.clamp(0.0, double.infinity);
+  }
   double _baseX = 0.0;
   
   // Animación (viento)

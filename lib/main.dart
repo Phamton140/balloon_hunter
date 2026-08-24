@@ -97,6 +97,8 @@ class _GameScreenState extends State<_GameScreen> {
   @override
   void dispose() {
     _game.gameManager.removeListener(_onGameStateChanged);
+    // Liberar recursos de audio al cerrar la pantalla
+    _game.gameManager.audioManager.dispose();
     super.dispose();
   }
 
