@@ -1,7 +1,8 @@
 // lib/managers/score_manager.dart
 // GestiA3n de puntuaciA3n, combos y estadA-sticas de la partida
 
-import 'package:flutter/firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import '../models/score_record.dart';
 import '../managers/level_manager.dart';
@@ -30,6 +31,12 @@ class ScoreManager extends ChangeNotifier {
   int get combo => _combo;
   int get maxCombo => _maxCombo;
   int get balloonsDestroyed => _balloonsDestroyed;
+
+  /// PrecisiA3n en porcentaje (0-100)
+  double get accuracy {
+    if (_totalTaps == 0) return 100.0;
+    return (_successfulTaps / _totalTaps * 100).clamp(0.0, 100.0);
+  }
 
   /// Multiplicador de nivel: cada 10 niveles a partir del 20
   /// Niveles 1-19: x1, 20-29: x2, 30-39: x3, etc.
@@ -62,7 +69,11 @@ class ScoreManager extends ChangeNotifier {
 
     if (_combo > _maxCombo) _maxCombo = _combo;
 
-    final levelMult = _levelManager.levelMultiplier;
+    // Calculador directo del multiplicador de nivel (sin depender de getter de LevelManager)
+    int levelMult = 1;
+    if (_levelManager.currentLevel >= 20) {
+      levelMult = _levelManager.currentLevel ~/ 10;
+    }
     final multiplier = isBlackBalloon ? 1.0 : comboMultiplier * levelMult;
     final earned = (basePoints * multiplier).round();
     _score += earned;
@@ -94,7 +105,20 @@ class ScoreManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Construye un ScoreRecord con las estadA-sticas actuales de la partida
+  /// Guarda la puntuaciA3n actual como el inicio del nivel (para recompensas)
+  void saveLevelStartScore() {
+    _levelStartScore = _score;
+    notifyListeners();
+  }
+
+  /// Restaura la puntuaciA3n a la que tenA-a al iniciar el nivel (al revivir)
+  void revertToLevelStartScore() {
+    _score = _levelStartScore;
+    _combo = 0;
+    notifyListeners();
+  }
+
+  /// Construye un ScoreRecord con las estadisticas actuales de la partida
   ScoreRecord buildRecord({required int level}) {
     return ScoreRecord(
       score: _score,

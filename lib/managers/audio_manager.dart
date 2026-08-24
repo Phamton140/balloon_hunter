@@ -78,7 +78,7 @@ class AudioManager {
 
   bool _shouldPlayBgm = false;
 
-  /// Reproduce la música de fondo actual
+  /// Reproduce la música de fondo actual.
   /// Si la playlist está barajada, reproducirá en el orden shuffle; de lo contrario, orden original.
   Future<void> playBgm() async {
     _shouldPlayBgm = true;
@@ -98,7 +98,7 @@ class AudioManager {
       
       // Usar playlist barajada si está activa, sino la original
       final playlistActual = _isShuffled ? _playlistShuffled : _playlistOriginal;
-      final songIndex = _isShuffled ? _currentShuffledIndex : _currentSongIndex;
+      final songIndex = _isShuffled ? _currentShuffledIndex : 0;
       final assetName = playlistActual[songIndex];
       
       await _bgmPlayer!.play(AssetSource('audio/$assetName'));
@@ -123,12 +123,13 @@ class AudioManager {
         shufflePlaylist();
       }
     } else {
-      // Modo original: aleatorio sin consecutivas
-      int nextIndex = _currentSongIndex;
-      while (nextIndex == _currentSongIndex) {
-        nextIndex = _random.nextInt(_playlistOriginal.length);
+      // Modo original: reproducir siguiente en orden (sin aleatorio para evitar errores)
+      // Si no está shuffled, reiniciamos el índice si llegamos al final
+      if (_currentShuffledIndex >= _playlistOriginal.length - 1) {
+        _currentShuffledIndex = 0;
+      } else {
+        _currentShuffledIndex++;
       }
-      _currentSongIndex = nextIndex;
     }
     playBgm();
   }

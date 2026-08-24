@@ -4,6 +4,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'ad_manager.dart';
 import 'dart:math' as math;
 import '../models/game_state.dart';
 import '../models/game_event.dart';
@@ -177,14 +178,13 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     await audioManager.playBgm();
     
     // Mostrar anuncio si se inicia desde un nivel avanzado (no el nivel 1)
-    if (startLevel > 1 && mounted) {
+    // Wait a frame then show ad
+    if (startLevel > 1) {
       // Wait a frame then show ad
       await Future.delayed(const Duration(milliseconds: 300));
-      if (mounted) {
-        AdManager().showRewardedAd(onRewardEarned: () {
-          debugPrint('[GameManager] Ad rewarded, game starting from level $startLevel');
-        });
-      }
+      AdManager().showRewardedAd(onRewardEarned: () {
+        debugPrint('[GameManager] Ad rewarded, game starting from level $startLevel');
+      });
     }
   }
 
