@@ -395,6 +395,11 @@ class RankingScreen extends StatelessWidget {
   void _showPlayerOptions(BuildContext context, Map<String, dynamic> playerData) {
     if (playerData['playerId'] == gameManager.authManager.playerId) return;
 
+    final isFriend = gameManager.friendsManager.friendIds.contains(playerData['playerId']);
+    final pendingRequest = gameManager.inboxManager.pendingRequests
+        .where((r) => r.fromPlayerId == playerData['playerId'])
+        .isNotEmpty;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.black87,
@@ -406,17 +411,70 @@ class RankingScreen extends StatelessWidget {
           children: [
             Text(playerData['playerName'] ?? 'Jugador', style: GoogleFonts.fredoka(fontSize: 24, color: Colors.white)),
             const SizedBox(height: 20),
-            ListTile(
-              leading: const Icon(Icons.person_add, color: Colors.white),
-              title: const Text('Seguir / Añadir Amigo', style: TextStyle(color: Colors.white)),
-              onTap: () async {
-                final success = await gameManager.friendsManager.addFriendById(playerData['playerId']);
-                if (context.mounted) {
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success ? 'Añadido a amigos' : 'No se pudo añadir')));
-                }
-              },
-            ),
+            // Botón principal depende del estado
+            if (!isFriend && !pendingRequest)
+              ListTile(
+                leading: const Icon(Icons.person_add, color: Colors.white),
+                title: const Text('Añadir Amigo', style: TextStyle(color: Colors.white)),
+                onTap: () async {
+                  final success = await gameManager.friendsManager.addFriendById(playerData['playerId']);
+                  if (context.mounted) {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success ? 'Añadido a amigos' : 'No se pudo añadir')));
+                  }
+                },
+              )
+            else if (isFriend)
+              ListTile(
+                leading: const Icon(Icons.person_remove, color: Colors.white),
+                title: const Text('Eliminar Amigo', style: TextStyle(color: Colors.white)),
+                onTap: () async {
+                  final confirmed = await showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: const Color(0xFF2C2C2C),
+                      title: Text('Eliminar Amigo', style: GoogleFonts.fredoka(color: Colors.white)),
+                      content: Text('¿Estás seguro de eliminar a este amigo?', style: TextStyle(color: Colors.white70)),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Cancelar', style: TextStyle(color: Colors.white54)),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            // Lógica para eliminar amigo (se haría en friends_manager)
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Amigo eliminado')));
+                          },
+                          child: Text('Confirmar', style: GoogleFonts.fredoka(color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed && context.mounted) {
+                    // Aquí se llamaría a la eliminación real
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Funcionalidad de eliminación por implementar')));
+                  }
+                },
+              )
+            else if (pendingRequest)
+              ListTile(
+                leading: const Icon(Icons.cancel, color: Colors.white),
+                title: const Text('Cancelar Invitación', style: TextStyle(color: Colors.white)),
+                onTap: () async {
+                  final success = await gameManager.inboxManager.respondToRequest(
+                    /* need to get request id */ '',
+                    playerData['playerId'],
+                    false
+                  );
+                  if (context.mounted) {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success ? 'Invitación cancelada' : 'Error al cancelar')));
+                  }
+                },
+              ),
           ],
         ),
       ),

@@ -24,10 +24,10 @@ class Palette {
   static const Color particleClock = Color(0xFFF9A826); 
 
   // -- Globo Blindado --
-  static const Color armoredPremium = Color(0xFFE2E8F0); // Plateado brillante
+  static const Color armoredPremium = Color(0xFF9B59B6); // Morado brillante
   static const Color armoredPremiumGlow = Color(0xFFFFFFFF);
-  static const Color armoredDamaged = Color(0xFF757575); // Gris oscuro dañado
-  static const Color armoredDamagedGlow = Color(0xFF9E9E9E);
+  static const Color armoredDamaged = Color(0xFF8E44AD); // Morado dañado
+  static const Color armoredDamagedGlow = Color(0xFFE1BEE7);
 
   // -- Partículas de explosión por tipo --
   static const Color particleYellow = Color(0xFFFFD600);

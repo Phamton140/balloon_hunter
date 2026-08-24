@@ -1,12 +1,13 @@
 // lib/managers/score_manager.dart
-// Gestión de puntuación, combos y estadísticas de la partida
+// GestiA3n de puntuaciA3n, combos y estadA-sticas de la partida
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/firestore/cloud_firestore.dart';
 import '../utils/constants.dart';
 import '../models/score_record.dart';
+import '../managers/level_manager.dart';
 
-/// Gestiona la puntuación en tiempo real, el sistema de combos
-/// y las estadísticas de precisión de la partida actual.
+/// Gestiona la puntuaciA3n en tiempo real, el sistema de combos
+/// y las estadA-sticas de precisiA3n de la partida actual.
 class ScoreManager extends ChangeNotifier {
   int _score = 0;
   int _combo = 0;
@@ -14,37 +15,35 @@ class ScoreManager extends ChangeNotifier {
   int _balloonsDestroyed = 0;
   int _totalTaps = 0;        // taps sobre cualquier cosa
   int _successfulTaps = 0;   // taps que acertaron un globo
-  int _levelStartScore = 0;  // puntuación al inicio del nivel actual
+  int _levelStartScore = 0;  // puntuaciA3n al inicio del nivel actual
+  final LevelManager _levelManager = LevelManager();
+
+  ScoreManager() {
+    _levelManager.addListener(_onLevelChanged);
+  }
+
+  void _onLevelChanged() {
+    notifyListeners();
+  }
 
   int get score => _score;
   int get combo => _combo;
   int get maxCombo => _maxCombo;
   int get balloonsDestroyed => _balloonsDestroyed;
 
-  /// Multiplicador de combo según el número de impactos consecutivos
+  /// Multiplicador de nivel: cada 10 niveles a partir del 20
+  /// Niveles 1-19: x1, 20-29: x2, 30-39: x3, etc.
+  int get levelMultiplier {
+    if (_levelManager.currentLevel < 20) return 1;
+    return (_levelManager.currentLevel ~/ 10); // dividida entera: 80 ? 8, 50 ? 5, etc.
+  }
+
+  /// Multiplicador de combo segA?n el nA?mero de impactos consecutivos
   double get comboMultiplier {
     if (_combo >= GameConstants.comboThreshold3) return 3.0;
     if (_combo >= GameConstants.comboThreshold2) return 2.0;
     if (_combo >= GameConstants.comboThreshold1) return 1.5;
     return 1.0;
-  }
-
-  /// Precisión en porcentaje (0-100)
-  double get accuracy {
-    if (_totalTaps == 0) return 100.0;
-    return (_successfulTaps / _totalTaps * 100).clamp(0.0, 100.0);
-  }
-
-  /// Registra la puntuación actual como el inicio del nivel (para recompensas)
-  void saveLevelStartScore() {
-    _levelStartScore = _score;
-  }
-
-  /// Restaura la puntuación a la que tenía al iniciar el nivel (al revivir)
-  void revertToLevelStartScore() {
-    _score = _levelStartScore;
-    _combo = 0;
-    notifyListeners();
   }
 
   /// Suma puntos al explotar un globo normal.
@@ -63,20 +62,21 @@ class ScoreManager extends ChangeNotifier {
 
     if (_combo > _maxCombo) _maxCombo = _combo;
 
-    final multiplier = isBlackBalloon ? 1.0 : comboMultiplier;
+    final levelMult = _levelManager.levelMultiplier;
+    final multiplier = isBlackBalloon ? 1.0 : comboMultiplier * levelMult;
     final earned = (basePoints * multiplier).round();
     _score += earned;
     notifyListeners();
   }
 
-  /// Suma puntos de múltiples globos (globo negro)
+  /// Suma puntos de mA?ltiples globos (globo negro)
   void addBulkPoints(int totalPoints, int count) {
     _score += totalPoints;
     _balloonsDestroyed += count;
     notifyListeners();
   }
 
-  /// Registra un tap fallido (no golpeó nada)
+  /// Registra un tap fallido (no golpeA3 nada)
   void registerMiss() {
     _totalTaps++;
     _combo = 0;
@@ -94,7 +94,7 @@ class ScoreManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Construye un ScoreRecord con las estadísticas actuales de la partida
+  /// Construye un ScoreRecord con las estadA-sticas actuales de la partida
   ScoreRecord buildRecord({required int level}) {
     return ScoreRecord(
       score: _score,

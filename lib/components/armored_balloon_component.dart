@@ -177,21 +177,16 @@ class ArmoredBalloonComponent extends PositionComponent
   }
 
   void _renderArmoredBalloon(Canvas canvas) {
-    if (_hp <= 1) {
-      // Capa 3: Globo común
-      _renderBaseBalloon(canvas, Palette.balloonRed, Palette.balloonRedGlow);
-      return;
-    }
-
-    final isPremium = _hp == 3;
-    final baseColor = isPremium ? Palette.armoredPremium : Palette.armoredDamaged;
-    final glowColor = isPremium ? Palette.armoredPremiumGlow : Palette.armoredDamagedGlow;
+    // Siempre usamos colores morados (el globo mantiene su color principal)
+    final ispremium = _hp == 3;
+    final baseColor = ispremium ? Palette.armoredPremium : Palette.armoredDamaged;
+    final glowColor = ispremium ? Palette.armoredPremiumGlow : Palette.armoredDamagedGlow;
 
     _renderBaseBalloon(canvas, baseColor, glowColor);
 
-    // Dibujar escudo de protección en el centro
+    // Dibujar escudo de protección en el centro (siempre visible, con estado según hp)
     final shieldPaint = Paint()
-      ..color = isPremium ? const Color(0xFFFBC02D).withOpacity(0.9) : const Color(0xFF9E9E9E).withOpacity(0.8)
+      ..color = ispremium ? const Color(0xFFFBC02D).withOpacity(0.9) : const Color(0xFF8E44AD).withOpacity(0.8)
       ..style = PaintingStyle.fill;
 
     final shieldBorderPaint = Paint()
@@ -210,8 +205,9 @@ class ArmoredBalloonComponent extends PositionComponent
     canvas.drawPath(shieldPath, shieldPaint);
     canvas.drawPath(shieldPath, shieldBorderPaint);
 
-    if (isPremium) {
-      // Cruz protectora en el centro del escudo
+    // Mostrar estado del escudo según golpes recibidos
+    if (ispremium) {
+      // Cruz protectora en el centro del escudo (solo cuando tiene los 3 escudos)
       final crossPaint = Paint()
         ..color = Colors.white.withOpacity(0.6)
         ..style = PaintingStyle.stroke
@@ -220,7 +216,7 @@ class ArmoredBalloonComponent extends PositionComponent
       canvas.drawLine(const Offset(0, -6), const Offset(0, 8), crossPaint);
       canvas.drawLine(const Offset(-7, 1), const Offset(7, 1), crossPaint);
     } else {
-      // Grietas en el escudo por el daño
+      // Grietas en el escudo por el daño (siempre visibles cuando hp < 3)
       final crackPaint = Paint()
         ..color = Colors.black.withOpacity(0.6)
         ..style = PaintingStyle.stroke
@@ -231,6 +227,17 @@ class ArmoredBalloonComponent extends PositionComponent
         ..lineTo(-6, 6)
         ..lineTo(2, 16);
       canvas.drawPath(crackPath, crackPaint);
+      // Siempre mostrar al menos una grieta para mostrar que ha recibido daño
+      if (_hp <= 2) {
+        final crackPaint2 = Paint()
+          ..color = Colors.black.withOpacity(0.5)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5;
+        final crackPath2 = Path()
+          ..moveTo(-4, -8)
+          ..lineTo(4, -8);
+        canvas.drawPath(crackPath2, crackPaint2);
+      }
     }
   }
 
@@ -245,11 +252,30 @@ class ArmoredBalloonComponent extends PositionComponent
     });
   }
 
-  /// Reduce HP o explota si llega a 0
+  /// Reduce HP y actualiza velocidad progresivamente
+  /// Velocidad: 1er toque = amarillo, 2to = verde, 3to = rojo (siempre color morado)
   void takeHit() {
     _hp--;
-    if (_hp > 0) {
-      _hitFlashTime = 0.2; // Efecto de parpadeo/sacudida
+    _hitFlashTime = 0.2; // Efecto de parpadeo/sacudida
+
+    // Actualizar velocidad según número de toques recibidos
+    final variation = GameConstants.speedVariationMin +
+        _random.nextDouble() *
+            (GameConstants.speedVariationMax - GameConstants.speedVariationMin);
+
+    switch (_hp) {
+      case 2:
+        // 1er impacto: velocidad amarillo (80.0)
+        _speed = 80.0 * variation;
+        break;
+      case 1:
+        // 2do impacto: velocidad verde (130.0)
+        _speed = 130.0 * variation;
+        break;
+      case 0:
+        // 3er impacto: velocidad roja (180.0) - será destruido
+        _speed = 180.0 * variation;
+        break;
     }
   }
 

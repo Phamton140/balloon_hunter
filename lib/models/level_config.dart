@@ -70,7 +70,22 @@ class LevelConfig {
   /// Duración del nivel en segundos (siempre 60s)
   double get levelDuration => GameConstants.levelDuration;
 
+  /// Retorna la característica desbloqueada según la progresión cada 10 niveles.
+  /// Orden: 1-10: Azul, 11-20: Blindado, 21-30: Naturaleza, 31-40: Bomba,
+  /// 41-50: Desierto, 51-60: Reloj, 61-70: Colinas, 71-80: Sin especificar
+  String get unlockedFeature {
+    if (level >= 1 && level <= 10) return 'Globo azul (hielo)';
+    if (level >= 11 && level <= 20) return 'Globo blindado';
+    if (level >= 21 && level <= 30) return 'Tema naturaleza';
+    if (level >= 31 && level <= 40) return 'Globo bomba';
+    if (level >= 41 && level <= 50) return 'Tema desierto';
+    if (level >= 51 && level <= 60) return 'Globo reloj';
+    if (level >= 61 && level <= 70) return 'Tema colinas';
+    if (level >= 71 && level <= 80) return 'Por especificar';
+    return 'Sin novedades';
+  }
+
   @override
   String toString() =>
-      'LevelConfig(level: $level, speedMult: ${speedMultiplier.toStringAsFixed(2)}, spawnInterval: ${spawnInterval.toStringAsFixed(2)}s)';
+      'LevelConfig(level: $level, speedMult: ${speedMultiplier.toStringAsFixed(2)}, spawnInterval: ${spawnInterval.toStringAsFixed(2)}s, feature: $unlockedFeature)';
 }

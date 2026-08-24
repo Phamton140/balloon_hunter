@@ -404,6 +404,19 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
       scoreManager.addBulkPoints(totalPoints, balloons.length);
     }
     
+    // Debilitar todos los globos blindados, quitando sus escudos
+    // Dejan hp = 1 (estado vulnerable) para que el usuario los explote con 1 toque
+    for (final b in children.whereType<ArmoredBalloonComponent>()) {
+      b._hp = 1;
+      // Velocidad máxima para que sea fácil atraparlo
+      final variation = GameConstants.speedVariationMin +
+          _random.nextDouble() *
+              (GameConstants.speedVariationMax - GameConstants.speedVariationMin);
+      b._speed = 180.0 * variation; // Velocidad roja
+      // Notificar a la UI que cambió el estado
+      b.notifyListeners();
+    }
+    
     // Y limpiar las aves de la pantalla sin sumar puntos
     // spawnManager.removeAllBirds(children.toList()); // MODIFICADO: Ahora preserva aves por el medio ambiente
   }
@@ -460,6 +473,10 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
         .forEach((c) => c.removeFromParent());
     children
         .whereType<SpecialBalloonComponent>()
+        .toList()
+        .forEach((c) => c.removeFromParent());
+    children
+        .whereType<ArmoredBalloonComponent>()
         .toList()
         .forEach((c) => c.removeFromParent());
     children

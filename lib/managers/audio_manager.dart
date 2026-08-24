@@ -12,8 +12,8 @@ import 'package:flutter/foundation.dart';
 class AudioManager {
   double _masterVolume = 0.6; // Valor inicial
 
-  // -- Playlist --
-  final List<String> _playlist = [
+  // -- Playlist original --
+  final List<String> _playlistOriginal = [
     'bgm1.mp3',
     'bgm2.mp3',
     'bgm3.mp3',
@@ -23,7 +23,10 @@ class AudioManager {
     'bgm7.mp3',
     'bgm8.mp3',
   ];
-  int _currentSongIndex = 0;
+  // -- Playlist actual (después de shuffle) --
+  List<String> _playlistShuffled = [];
+  int _currentShuffledIndex = 0;
+  bool _isShuffled = false;
   AudioPlayer? _bgmPlayer;
   StreamSubscription? _playerCompleteSubscription;
   final Map<String, AudioPool> _sfxPools = {};
@@ -60,9 +63,23 @@ class AudioManager {
     }
   }
 
+  /// Baraja la playlist y la establece en orden lineal para la sesión actual.
+  /// Al reiniciarse el juego, se volverá a barajar.
+  void shufflePlaylist() {
+    final list = List<String>.from(_playlistOriginal);
+    if (list.length > 1) {
+      list.shuffle();
+    }
+    _playlistShuffled = list;
+    _currentShuffledIndex = 0;
+    _isShuffled = true;
+    debugPrint('[AudioManager] Playlist shuffled: $_playlistShuffled');
+  }
+
   bool _shouldPlayBgm = false;
 
   /// Reproduce la música de fondo actual
+  /// Si la playlist está barajada, reproducirá en el orden shuffle; de lo contrario, orden original.
   Future<void> playBgm() async {
     _shouldPlayBgm = true;
     if (_masterVolume <= 0) return;
@@ -79,7 +96,12 @@ class AudioManager {
       // Chequeo de seguridad antes de reproducir
       if (!_shouldPlayBgm) return;
       
-      await _bgmPlayer!.play(AssetSource('audio/${_playlist[_currentSongIndex]}'));
+      // Usar playlist barajada si está activa, sino la original
+      final playlistActual = _isShuffled ? _playlistShuffled : _playlistOriginal;
+      final songIndex = _isShuffled ? _currentShuffledIndex : _currentSongIndex;
+      final assetName = playlistActual[songIndex];
+      
+      await _bgmPlayer!.play(AssetSource('audio/$assetName'));
       
       // Chequeo de seguridad por si stopBgm se llamó mientras cargaba el asset
       if (!_shouldPlayBgm) {
@@ -90,15 +112,24 @@ class AudioManager {
     }
   }
 
-  final _random = math.Random();
-
   void _playNextSong() {
-    if (_playlist.length <= 1) return;
-    int nextIndex = _currentSongIndex;
-    while (nextIndex == _currentSongIndex) {
-      nextIndex = _random.nextInt(_playlist.length);
+    if (_playlistOriginal.length <= 1) return;
+    
+    if (_isShuffled) {
+      // Modo shuffle: avanzar al siguiente en el orden barajado
+      _currentShuffledIndex++;
+      if (_currentShuffledIndex >= _playlistShuffled.length) {
+        // Fin de la playlist barajada, reshuffle para la próxima sesión
+        shufflePlaylist();
+      }
+    } else {
+      // Modo original: aleatorio sin consecutivas
+      int nextIndex = _currentSongIndex;
+      while (nextIndex == _currentSongIndex) {
+        nextIndex = _random.nextInt(_playlistOriginal.length);
+      }
+      _currentSongIndex = nextIndex;
     }
-    _currentSongIndex = nextIndex;
     playBgm();
   }
 

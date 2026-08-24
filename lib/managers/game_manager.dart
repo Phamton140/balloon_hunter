@@ -160,19 +160,32 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  /// Inicia una nueva partida desde el nivel 1
-  Future<void> startNewGame() async {
+  /// Inicia una nueva partida.
+/// [startLevel]: nivel desde el cual comenzar (1 para nueva partida, o el último alcanzado para continuar).
+/// Si [startLevel] es mayor que 1, se mostrará un anuncio recompensado antes de iniciar.
+  Future<void> startNewGame({int startLevel = 1}) async {
     await finalizeGameOverScore();
     await saveManager.clearSave();
     scoreManager.reset();
     scoreManager.saveLevelStartScore(); // Guarda score inicial = 0
-    levelManager.reset();
+    levelManager.setLevel(startLevel); // Establecer nivel inicial
     timerManager.reset();
     timerManager.start();
     _playTimeAccumulator = 0.0;
     _deactivateSlowMotion();
     changeState(GameState.countdown);
     await audioManager.playBgm();
+    
+    // Mostrar anuncio si se inicia desde un nivel avanzado (no el nivel 1)
+    if (startLevel > 1 && mounted) {
+      // Wait a frame then show ad
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (mounted) {
+        AdManager().showRewardedAd(onRewardEarned: () {
+          debugPrint('[GameManager] Ad rewarded, game starting from level $startLevel');
+        });
+      }
+    }
   }
 
   /// Vuelve al menú principal
@@ -371,9 +384,9 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     debugPrint('[GameManager] Black balloon activated');
   }
 
-  /// Activa el efecto del globo reloj (adelanta el tiempo 5s)
+  /// Activa el efecto del globo reloj (reduce 10s del tiempo)
   void activateClockBalloon() {
-    timerManager.reduceRemainingTime(5.0);
+    timerManager.reduceRemainingTime(10.0);
     // Mostrar feedback en UI si es necesario (el Timer widget podría parpadear)
   }
 
