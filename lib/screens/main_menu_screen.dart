@@ -455,18 +455,22 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
           ).animate().scale(duration: 300.ms, curve: Curves.easeOutBack),
         ),
       );
-    } else {
+} else {
       showDialog(
         context: context,
         barrierColor: Colors.black87,
-builder: (context) => LevelSelectionDialog(
+        builder: (context) => LevelSelectionDialog(
           maxLevelReached: widget.gameManager.saveManager.maxLevelReached,
           onLevelSelected: (startLevel) {
-            if (Navigator.canPop(context)) Navigator.of(context).pop();
             widget.gameManager.startNewGame(startLevel: startLevel);
           },
+          onGameStart: () {
+            // Necesario para iniciar el juego realmente (llama a startGame en BalloonHunterGame)
+            // No tenemos acceso directo al game aquí, pero el startNewGame ya cambia a countdown
+            // y el countdown llama a changeState(playing) que muestra el HUD
+          },
         ),
-      );
+);
     }
   }
 }

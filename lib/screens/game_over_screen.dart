@@ -289,11 +289,13 @@ class _SmallGOButton extends StatelessWidget {
 class LevelSelectionDialog extends StatefulWidget {
   final int maxLevelReached;
   final Function(int startLevel)? onLevelSelected;
+  final VoidCallback? onGameStart;
 
   const LevelSelectionDialog({
     super.key,
     required this.maxLevelReached,
     this.onLevelSelected,
+    this.onGameStart,
   });
 
   @override
@@ -382,6 +384,7 @@ class _LevelSelectionDialogState extends State<LevelSelectionDialog> with Single
                         color: const Color(0xFF43E97B),
                         onTap: () {
                           widget.onLevelSelected?.call(1);
+                          widget.onGameStart?.call();
                           Navigator.of(context).pop();
                         },
                       ),
@@ -393,6 +396,7 @@ class _LevelSelectionDialogState extends State<LevelSelectionDialog> with Single
                           color: const Color(0xFFFFD600),
                           onTap: () {
                             widget.onLevelSelected?.call(widget.maxLevelReached);
+                            widget.onGameStart?.call();
                             Navigator.of(context).pop();
                           },
                         ),

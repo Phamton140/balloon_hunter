@@ -545,12 +545,15 @@ actions: [
                   showDialog(
                     context: context,
                     barrierColor: Colors.black87,
-                    builder: (context) => LevelSelectionDialog(
+builder: (context) => LevelSelectionDialog(
                       maxLevelReached: gameManager.saveManager.maxLevelReached,
-onLevelSelected: (startLevel) {
-            if (Navigator.canPop(context)) Navigator.of(context).pop();
-            gameManager.startNewGame(startLevel: startLevel);
-          },
+                      onLevelSelected: (startLevel) {
+                        if (Navigator.canPop(context)) Navigator.of(context).pop();
+                        gameManager.startNewGame(startLevel: startLevel);
+                      },
+                      onGameStart: () {
+                        // El countdown screen llama a onCountdownComplete que cambia a playing
+                      },
                     ),
                   );
                 },
@@ -567,15 +570,18 @@ onLevelSelected: (startLevel) {
           ],
         ),
       );
-    } else {
+} else {
       showDialog(
         context: context,
         barrierColor: Colors.black87,
-builder: (context) => LevelSelectionDialog(
+        builder: (context) => LevelSelectionDialog(
           maxLevelReached: gameManager.saveManager.maxLevelReached,
           onLevelSelected: (startLevel) {
             Navigator.of(context).pop();
             onNewGame?.call();
+          },
+          onGameStart: () {
+            // El countdown screen llama a onCountdownComplete que cambia a playing
           },
         ),
       );
