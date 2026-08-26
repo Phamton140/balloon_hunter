@@ -39,8 +39,8 @@ import 'managers/cloud_sync_manager.dart';
 class BalloonHunterGame extends FlameGame with TapCallbacks {
   // -- Gestores --
   final AudioManager audioManager = AudioManager();
-  final ScoreManager scoreManager = ScoreManager();
   final LevelManager levelManager = LevelManager();
+  late final ScoreManager scoreManager;
   final TimerManager timerManager = TimerManager();
   final AuthManager authManager = AuthManager();
   late final FriendsManager friendsManager;
@@ -61,6 +61,7 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
   bool _birdHitGameOver = false;
 
   BalloonHunterGame() {
+    scoreManager = ScoreManager(levelManager);
     inboxManager = InboxManager(authManager);
     friendsManager = FriendsManager(authManager, inboxManager);
     rankingManager = RankingManager(authManager);
@@ -89,7 +90,7 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
     await gameManager.initialize();
     
     // Iniciar sincronización en la nube en segundo plano
-    cloudSyncManager.initialize();
+    await cloudSyncManager.initialize();
     
     // Configurar observador del ciclo de vida para Flame
     // No necesitamos LifecycleListener porque la app principal lo maneja

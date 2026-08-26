@@ -24,10 +24,12 @@ class Palette {
   static const Color particleClock = Color(0xFFF9A826); 
 
   // -- Globo Blindado --
-  static const Color armoredPremium = Color(0xFF9B59B6); // Morado brillante
+  static const Color armoredPremium = Color(0xFFAB47BC); // Morado claro y vibrante
   static const Color armoredPremiumGlow = Color(0xFFFFFFFF);
-  static const Color armoredDamaged = Color(0xFF8E44AD); // Morado dañado
-  static const Color armoredDamagedGlow = Color(0xFFE1BEE7);
+  static const Color armoredDamaged = Color(0xFFBA68C8); // Morado agrietado (más claro)
+  static const Color armoredDamagedGlow = Color(0xFFFFFFFF);
+  static const Color armoredExposed = Color(0xFFCE93D8); // Morado expuesto (sin escudo)
+  static const Color armoredExposedGlow = Color(0xFFF3E5F5);
 
   // -- Partículas de explosión por tipo --
   static const Color particleYellow = Color(0xFFFFD600);

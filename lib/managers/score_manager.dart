@@ -17,9 +17,9 @@ class ScoreManager extends ChangeNotifier {
   int _totalTaps = 0;        // taps sobre cualquier cosa
   int _successfulTaps = 0;   // taps que acertaron un globo
   int _levelStartScore = 0;  // puntuaciA3n al inicio del nivel actual
-  final LevelManager _levelManager = LevelManager();
+  final LevelManager _levelManager;
 
-  ScoreManager() {
+  ScoreManager(this._levelManager) {
     _levelManager.addListener(_onLevelChanged);
   }
 
@@ -81,8 +81,17 @@ class ScoreManager extends ChangeNotifier {
   }
 
   /// Suma puntos de mA?ltiples globos (globo negro)
-  void addBulkPoints(int totalPoints, int count) {
-    _score += totalPoints;
+  void addBulkPoints(int totalPoints, int count, {bool applyMultipliers = true}) {
+    if (applyMultipliers) {
+      int levelMult = 1;
+      if (_levelManager.currentLevel >= 20) {
+        levelMult = _levelManager.currentLevel ~/ 10;
+      }
+      final multiplier = comboMultiplier * levelMult;
+      _score += (totalPoints * multiplier).round();
+    } else {
+      _score += totalPoints;
+    }
     _balloonsDestroyed += count;
     notifyListeners();
   }

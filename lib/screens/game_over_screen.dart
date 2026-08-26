@@ -10,7 +10,7 @@ import '../utils/palette.dart';
 class GameOverScreen extends StatefulWidget {
   final GameManager gameManager;
   final bool birdHit;
-  final VoidCallback? onPlayAgain;
+  final Function(int startLevel) onPlayAgain; // Changed from VoidCallback
   final VoidCallback? onRevive;
   final VoidCallback? onMenu;
 
@@ -18,7 +18,7 @@ class GameOverScreen extends StatefulWidget {
     super.key,
     required this.gameManager,
     this.birdHit = false,
-    this.onPlayAgain,
+    required this.onPlayAgain, // Changed from VoidCallback
     this.onRevive,
     this.onMenu,
   });
@@ -41,7 +41,7 @@ class _GameOverScreenState extends State<GameOverScreen> {
   Widget build(BuildContext context) {
     final gameManager = widget.gameManager;
     // Si NO fue por dejar escapar 3 globos, entonces fue por chocar un pájaro.
-    final birdHit = !gameManager.levelManager.isGameOver;
+    final birdHit = widget.birdHit;
     final onPlayAgain = widget.onPlayAgain;
     final onRevive = widget.onRevive;
     final onMenu = widget.onMenu;
@@ -53,6 +53,8 @@ class _GameOverScreenState extends State<GameOverScreen> {
     final destroyed = gameManager.scoreManager.balloonsDestroyed;
     final bestScore = gameManager.rankingManager.getBestScore();
     final isNewRecord = score > bestScore;
+
+    final maxLevelReached = widget.gameManager.saveManager.maxLevelReached;
 
     return Container(
       decoration: const BoxDecoration(
@@ -156,14 +158,7 @@ class _GameOverScreenState extends State<GameOverScreen> {
                           },
                         ),
 
-                        // Play again (debajo)
-                        _GOButton(
-                          label: 'NUEVA PARTIDA',
-                          gradient: const LinearGradient(colors: [Palette.menuAccent, Color(0xFFFF6B81)]),
-                          onTap: () => onPlayAgain?.call(),
-                        ).animate().fadeIn(delay: 800.ms),
-
-                        const SizedBox(height: 24), // Espaciado agregado
+                        const SizedBox(height: 24),
 
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -240,7 +235,7 @@ class _GOStatRow extends StatelessWidget {
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: GoogleFonts.fredoka(fontSize: 14, color: Colors.white60)),
+        Text(label, style: GoogleFonts.fredoka(fontSize: 14, color: Colors.white)),
         Text(value, style: GoogleFonts.fredoka(fontSize: 14, color: Colors.white)),
       ],
     ),
@@ -289,3 +284,228 @@ class _SmallGOButton extends StatelessWidget {
     ),
   );
 }
+
+// Diálogo para seleccionar el nivel al empezar una nueva partida
+class LevelSelectionDialog extends StatefulWidget {
+  final int maxLevelReached;
+  final Function(int startLevel)? onLevelSelected;
+
+  const LevelSelectionDialog({
+    super.key,
+    required this.maxLevelReached,
+    this.onLevelSelected,
+  });
+
+  @override
+  State<LevelSelectionDialog> createState() => _LevelSelectionDialogState();
+}
+
+class _LevelSelectionDialogState extends State<LevelSelectionDialog> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _scaleAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.elasticOut,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+@override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF2C3E50), Color(0xFF000000)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white24, width: 2),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20, offset: const Offset(0, 10)),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'NUEVA PARTIDA',
+                        style: GoogleFonts.fredoka(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '¿Desde qué nivel quieres empezar?',
+                        style: GoogleFonts.fredoka(color: Colors.white70, fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      // Botón Nivel 1 (verde)
+                      _SimpleLevelButton(
+                        label: 'Nivel 1',
+                        subtitle: 'Empezar desde el principio',
+                        color: const Color(0xFF43E97B),
+                        onTap: () {
+                          widget.onLevelSelected?.call(1);
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      if (widget.maxLevelReached > 1) ...[
+                        const SizedBox(height: 12),
+                        _SimpleLevelButton(
+                          label: 'Continuar desde el Nivel ${widget.maxLevelReached}',
+                          subtitle: 'Tu mayor nivel alcanzado',
+                          color: const Color(0xFFFFD600),
+                          onTap: () {
+                            widget.onLevelSelected?.call(widget.maxLevelReached);
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    ],
+                  ),
+                  // Botón X para cerrar
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, color: Colors.white54, size: 20),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ).animate().scale(duration: 300.ms, curve: Curves.easeOutBack),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Botón simple de nivel para el diálogo
+class _SimpleLevelButton extends StatelessWidget {
+  final String label;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _SimpleLevelButton({
+    required this.label,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        splashColor: color.withValues(alpha: 0.2),
+        highlightColor: color.withValues(alpha: 0.1),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              colors: [
+                color.withValues(alpha: 0.2),
+                color.withValues(alpha: 0.05),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.2),
+                blurRadius: 15,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label,
+                      style: GoogleFonts.fredoka(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.fredoka(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+

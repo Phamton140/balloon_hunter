@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:math' as math;
 import '../managers/game_manager.dart';
 import '../managers/save_manager.dart';
+import '../screens/game_over_screen.dart'; // Added for _LevelSelectionDialog
 
 class MainMenuScreen extends StatefulWidget {
   final GameManager gameManager;
@@ -455,7 +456,17 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
         ),
       );
     } else {
-      widget.onNewGame?.call();
+      showDialog(
+        context: context,
+        barrierColor: Colors.black87,
+builder: (context) => LevelSelectionDialog(
+          maxLevelReached: widget.gameManager.saveManager.maxLevelReached,
+          onLevelSelected: (startLevel) {
+            if (Navigator.canPop(context)) Navigator.of(context).pop();
+            widget.gameManager.startNewGame(startLevel: startLevel);
+          },
+        ),
+      );
     }
   }
 }
@@ -486,9 +497,9 @@ class _GooglePlayCardState extends State<_GooglePlayCard> {
                   title: Text('Desconectar Cuenta', style: GoogleFonts.fredoka(color: Colors.white)),
                   content: const Text('¿Estás seguro de que quieres desconectar tu cuenta de Google?', style: TextStyle(color: Colors.white70)),
                   actions: [
-                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar', style: TextStyle(color: Colors.white54))),
+                    TextButton(onPressed: () => Navigator.canPop(ctx) ? Navigator.pop(ctx, false) : null, child: const Text('Cancelar', style: TextStyle(color: Colors.white54))),
                     ElevatedButton(
-                      onPressed: () => Navigator.pop(ctx, true),
+                      onPressed: () => Navigator.canPop(ctx) ? Navigator.pop(ctx, true) : null,
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                       child: const Text('Desconectar', style: TextStyle(color: Colors.white)),
                     ),

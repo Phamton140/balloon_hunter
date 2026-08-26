@@ -274,7 +274,7 @@ class RankingManager extends ChangeNotifier {
       data['playerId'] = _authManager.playerId;
       data['topScores'] = topScores;
       
-      docRef.set(data, SetOptions(merge: true));
+      await docRef.set(data, SetOptions(merge: true));
       
       _personalBestRecord = data;
       _personalBestRecord!['id'] = _authManager.playerId;

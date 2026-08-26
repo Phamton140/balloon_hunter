@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:games_services/games_services.dart';
 import '../managers/game_manager.dart';
 import '../models/score_record.dart';
+import '../screens/game_over_screen.dart'; // Added for _LevelSelectionDialog
 import '../utils/palette.dart';
 import '../utils/constants.dart';
 import '../managers/save_manager.dart';
@@ -385,12 +386,12 @@ class RankingScreen extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: Colors.white54))),
+          TextButton(onPressed: () => Navigator.canPop(ctx) ? Navigator.pop(ctx) : null, child: const Text('Cancelar', style: TextStyle(color: Colors.white54))),
           ElevatedButton(
             onPressed: () async {
               final success = await gameManager.friendsManager.addFriendByCode(controller.text);
               if (context.mounted) {
-                Navigator.pop(ctx);
+                if (Navigator.canPop(ctx)) Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success ? 'Amigo añadido' : 'Código inválido o ya añadido')));
               }
             },
@@ -428,7 +429,7 @@ class RankingScreen extends StatelessWidget {
                 onTap: () async {
                   final success = await gameManager.friendsManager.addFriendById(playerData['playerId']);
                   if (context.mounted) {
-                    Navigator.pop(ctx);
+                    if (Navigator.canPop(ctx)) Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success ? 'Añadido a amigos' : 'No se pudo añadir')));
                   }
                 },
@@ -446,15 +447,15 @@ class RankingScreen extends StatelessWidget {
                       content: Text('¿Estás seguro de eliminar a este amigo?', style: TextStyle(color: Colors.white70)),
                       actions: [
                         TextButton(
-                          onPressed: () => Navigator.pop(ctx),
+                          onPressed: () => Navigator.canPop(ctx) ? Navigator.pop(ctx) : null,
                           child: const Text('Cancelar', style: TextStyle(color: Colors.white54)),
                         ),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
                           onPressed: () {
-                            Navigator.pop(ctx);
+                            if (Navigator.canPop(ctx)) Navigator.pop(ctx);
                             // Lógica para eliminar amigo (se haría en friends_manager)
-                            Navigator.pop(context);
+                            if (Navigator.canPop(context)) Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Amigo eliminado')));
                           },
                           child: Text('Confirmar', style: GoogleFonts.fredoka(color: Colors.white)),
@@ -479,7 +480,7 @@ class RankingScreen extends StatelessWidget {
                     false
                   );
                   if (context.mounted) {
-                    Navigator.pop(ctx);
+                    if (Navigator.canPop(ctx)) Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success ? 'Invitación cancelada' : 'Error al cancelar')));
                   }
                 },
@@ -537,14 +538,24 @@ class RankingScreen extends StatelessWidget {
             '¿Desea continuar con la partida anterior?\n\nNivel: ${gameManager.saveManager.savedLevel}\nPuntuación: ${gameManager.saveManager.savedScore}',
             style: const TextStyle(color: Colors.white70),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                onNewGame?.call();
-              },
-              child: const Text('NUEVA PARTIDA', style: TextStyle(color: Colors.redAccent)),
-            ),
+actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  showDialog(
+                    context: context,
+                    barrierColor: Colors.black87,
+                    builder: (context) => LevelSelectionDialog(
+                      maxLevelReached: gameManager.saveManager.maxLevelReached,
+onLevelSelected: (startLevel) {
+            if (Navigator.canPop(context)) Navigator.of(context).pop();
+            gameManager.startNewGame(startLevel: startLevel);
+          },
+                    ),
+                  );
+                },
+                child: const Text('NUEVA PARTIDA', style: TextStyle(color: Colors.redAccent)),
+              ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
@@ -557,7 +568,17 @@ class RankingScreen extends StatelessWidget {
         ),
       );
     } else {
-      onNewGame?.call();
+      showDialog(
+        context: context,
+        barrierColor: Colors.black87,
+builder: (context) => LevelSelectionDialog(
+          maxLevelReached: gameManager.saveManager.maxLevelReached,
+          onLevelSelected: (startLevel) {
+            Navigator.of(context).pop();
+            onNewGame?.call();
+          },
+        ),
+      );
     }
   }
 }

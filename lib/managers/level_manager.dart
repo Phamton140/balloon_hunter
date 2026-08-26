@@ -61,7 +61,7 @@ class LevelManager extends ChangeNotifier {
 
   /// Establece el nivel actual (usado para iniciar desde un nivel específico)
   void setLevel(int level) {
-    _currentLevel = level.clamp(1, 100); // Limitar entre 1 y 100
+    _currentLevel = level.clamp(1, 9999); // Limitar entre 1 y 9999
     _escapedBalloons = 0;
     notifyListeners();
   }

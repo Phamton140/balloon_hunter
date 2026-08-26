@@ -286,8 +286,8 @@ class _GameScreenState extends State<_GameScreen> {
         GameConstants.overlayGameOver: (context, game) => GameOverScreen(
               gameManager: game.gameManager,
               birdHit: game.gameManager.state == GameState.gameOver,
-              onPlayAgain: () async {
-                await game.gameManager.startNewGame(startLevel: 1);
+              onPlayAgain: (int startLevel) async {
+                await game.gameManager.startNewGame(startLevel: startLevel);
                 game.startGame();
               },
               onRevive: () async {

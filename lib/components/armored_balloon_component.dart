@@ -9,7 +9,10 @@ import '../utils/palette.dart';
 import '../balloon_hunter_game.dart';
 
 /// Componente de globo blindado.
-/// Requiere 3 toques para ser destruido y cambia visualmente por capa.
+/// Requiere 3 toques para ser destruido:
+/// - Golpe 1: Escudo agrietado
+/// - Golpe 2: Escudo roto (globo expuesto)
+/// - Golpe 3: Explota
 class ArmoredBalloonComponent extends PositionComponent
     with TapCallbacks, HasGameReference<BalloonHunterGame> {
 // Estado interno
@@ -77,7 +80,8 @@ class ArmoredBalloonComponent extends PositionComponent
         _random.nextDouble() *
             (GameConstants.speedVariationMax - GameConstants.speedVariationMin);
 
-    _speed = _type.baseSpeed * speedMultiplier * variation * slowMultiplier;
+    // HP=3 (Escudo Completo / Estado Inicial): Velocidad del globo amarillo (80.0)
+    _speed = GameConstants.balloonSpeedYellow * speedMultiplier * variation * slowMultiplier;
 
     _oscillationAmplitude = GameConstants.oscillationAmplitudeMin +
         _random.nextDouble() *
@@ -183,16 +187,34 @@ class ArmoredBalloonComponent extends PositionComponent
   }
 
   void _renderArmoredBalloon(Canvas canvas) {
-    // Siempre usamos colores morados (el globo mantiene su color principal)
-    final ispremium = _hp == 3;
-    final baseColor = ispremium ? Palette.armoredPremium : Palette.armoredDamaged;
-    final glowColor = ispremium ? Palette.armoredPremiumGlow : Palette.armoredDamagedGlow;
+    // Estados visuales según HP:
+    // HP=3: Escudo completo (color premium, cruz protectora)
+    // HP=2: Escudo agrietado (primer golpe)
+    // HP=1: Sin escudo (segundo golpe - globo expuesto, MISMO COLOR)
+    // HP=0: Destruido (se maneja en explodeAndReturn)
 
-    _renderBaseBalloon(canvas, baseColor, glowColor);
+    if (_hp == 3) {
+      // Estado 1: Escudo completo
+      _renderBaseBalloon(canvas, Palette.armoredPremium, Palette.armoredPremiumGlow);
+      _renderShield(canvas, Palette.armoredPremium, showCross: true, showCracks: false);
+    } else if (_hp == 2) {
+      // Estado 2: Escudo agrietado (primer golpe)
+      _renderBaseBalloon(canvas, Palette.armoredPremium, Palette.armoredPremiumGlow);
+      _renderShield(canvas, Palette.armoredDamaged, showCross: false, showCracks: true);
+    } else if (_hp == 1) {
+      // Estado 3: Sin escudo (segundo golpe - globo expuesto, MISMO COLOR BASE)
+      _renderBaseBalloon(canvas, Palette.armoredPremium, Palette.armoredPremiumGlow);
+      // No dibujamos escudo - el globo está expuesto
+    } else {
+      // Fallback (no debería llegar aquí en render)
+      _renderBaseBalloon(canvas, Palette.armoredPremium, Palette.armoredPremiumGlow);
+      _renderShield(canvas, Palette.armoredPremium, showCross: true, showCracks: false);
+    }
+  }
 
-    // Dibujar escudo de protección en el centro (siempre visible, con estado según hp)
+  void _renderShield(Canvas canvas, Color shieldColor, {required bool showCross, required bool showCracks}) {
     final shieldPaint = Paint()
-      ..color = ispremium ? const Color(0xFFFBC02D).withOpacity(0.9) : const Color(0xFF8E44AD).withOpacity(0.8)
+      ..color = shieldColor.withOpacity(0.9)
       ..style = PaintingStyle.fill;
 
     final shieldBorderPaint = Paint()
@@ -211,9 +233,8 @@ class ArmoredBalloonComponent extends PositionComponent
     canvas.drawPath(shieldPath, shieldPaint);
     canvas.drawPath(shieldPath, shieldBorderPaint);
 
-    // Mostrar estado del escudo según golpes recibidos
-    if (ispremium) {
-      // Cruz protectora en el centro del escudo (solo cuando tiene los 3 escudos)
+    if (showCross) {
+      // Cruz protectora en el centro del escudo (escudo completo)
       final crossPaint = Paint()
         ..color = Colors.white.withOpacity(0.6)
         ..style = PaintingStyle.stroke
@@ -221,8 +242,8 @@ class ArmoredBalloonComponent extends PositionComponent
         ..strokeCap = StrokeCap.round;
       canvas.drawLine(const Offset(0, -6), const Offset(0, 8), crossPaint);
       canvas.drawLine(const Offset(-7, 1), const Offset(7, 1), crossPaint);
-    } else {
-      // Grietas en el escudo por el daño (siempre visibles cuando hp < 3)
+    } else if (showCracks) {
+      // Grietas en el escudo por el daño (escudo agrietado)
       final crackPaint = Paint()
         ..color = Colors.black.withOpacity(0.6)
         ..style = PaintingStyle.stroke
@@ -233,17 +254,15 @@ class ArmoredBalloonComponent extends PositionComponent
         ..lineTo(-6, 6)
         ..lineTo(2, 16);
       canvas.drawPath(crackPath, crackPaint);
-      // Siempre mostrar al menos una grieta para mostrar que ha recibido daño
-      if (_hp <= 2) {
-        final crackPaint2 = Paint()
-          ..color = Colors.black.withOpacity(0.5)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5;
-        final crackPath2 = Path()
-          ..moveTo(-4, -8)
-          ..lineTo(4, -8);
-        canvas.drawPath(crackPath2, crackPaint2);
-      }
+      // Segunda grieta
+      final crackPaint2 = Paint()
+        ..color = Colors.black.withOpacity(0.5)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5;
+      final crackPath2 = Path()
+        ..moveTo(-4, -8)
+        ..lineTo(4, -8);
+      canvas.drawPath(crackPath2, crackPaint2);
     }
   }
 
@@ -259,28 +278,31 @@ class ArmoredBalloonComponent extends PositionComponent
   }
 
   /// Reduce HP y actualiza velocidad progresivamente
-  /// Velocidad: 1er toque = amarillo, 2to = verde, 3to = rojo (siempre color morado)
+  /// Velocidad según estado del escudo:
+  /// - HP=2 (1er impacto, escudo agrietado): velocidad verde (130.0)
+  /// - HP=1 (2do impacto, sin escudo): velocidad roja (180.0)
+  /// - HP=0 (3er impacto, destruido): velocidad roja (180.0)
   void takeHit() {
     _hp--;
     _hitFlashTime = 0.2; // Efecto de parpadeo/sacudida
 
-    // Actualizar velocidad según número de toques recibidos
+    // Actualizar velocidad según estado del escudo
     final variation = GameConstants.speedVariationMin +
         _random.nextDouble() *
             (GameConstants.speedVariationMax - GameConstants.speedVariationMin);
 
     switch (_hp) {
       case 2:
-        // 1er impacto: velocidad amarillo (80.0)
-        _speed = 80.0 * variation;
+        // 1er impacto: escudo agrietado -> velocidad verde (130.0)
+        _speed = GameConstants.balloonSpeedGreen * variation;
         break;
       case 1:
-        // 2do impacto: velocidad verde (130.0)
-        _speed = 130.0 * variation;
+        // 2do impacto: sin escudo -> velocidad roja (180.0)
+        _speed = GameConstants.balloonSpeedRed * variation;
         break;
       case 0:
-        // 3er impacto: velocidad roja (180.0) - será destruido
-        _speed = 180.0 * variation;
+        // 3er impacto: destruido -> velocidad roja (180.0)
+        _speed = GameConstants.balloonSpeedRed * variation;
         break;
     }
   }
