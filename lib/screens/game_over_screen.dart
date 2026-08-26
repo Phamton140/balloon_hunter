@@ -379,11 +379,11 @@ class _LevelSelectionDialogState extends State<LevelSelectionDialog> with Single
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24),
-                      // Botón Nivel 1 (verde)
+                      // Botón Nivel 1 (color globo verde)
                       _SimpleLevelButton(
                         label: 'Nivel 1',
                         subtitle: 'Empezar desde el principio',
-                        color: const Color(0xFF43E97B),
+                        color: Palette.balloonGreen,
                         onTap: () {
                           widget.onLevelSelected?.call(1);
                           widget.onGameStart?.call();
@@ -392,15 +392,13 @@ class _LevelSelectionDialogState extends State<LevelSelectionDialog> with Single
                       ),
                       if (widget.maxLevelReached > 1) ...[
                         const SizedBox(height: 12),
+                        // Botón Continuar - color dorado/amarillo (globo amarillo)
                         _SimpleLevelButton(
                           label: 'Continuar desde el Nivel ${widget.maxLevelReached}',
-                          subtitle: 'Tu mayor nivel alcanzado (Requiere ver anuncio)',
-                          color: const Color(0xFFFFD600),
+                          subtitle: 'Requiere ver anuncio para continuar',
+                          color: Palette.balloonYellow,
                           onTap: () async {
-                            // Para el botón "Continuar", mostrar Rewarded Ad primero
-                            final adManager = widget.gameManager?.audioManager != null 
-                                ? AdManager() 
-                                : AdManager();
+                            final adManager = AdManager();
                             
                             if (!adManager.isRewardedAdLoaded) {
                               adManager.loadRewardedAd();
@@ -419,39 +417,11 @@ class _LevelSelectionDialogState extends State<LevelSelectionDialog> with Single
                               return;
                             }
                             
-                            bool adCompleted = false;
-                            await showDialog<bool>(
-                              context: context,
-                              barrierDismissible: false,
-                              builder: (context) => AlertDialog(
-                                backgroundColor: const Color(0xFF2C3E50),
-                                title: Text('Ver anuncio para continuar', 
-                                    style: GoogleFonts.fredoka(color: Colors.white)),
-                                content: Text('¿Deseas ver un anuncio para continuar desde el Nivel ${widget.maxLevelReached}?',
-                                    style: GoogleFonts.fredoka(color: Colors.white70)),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.of(context).pop(false),
-                                    child: Text('Cancelar', style: GoogleFonts.fredoka(color: Colors.white54)),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      adManager.showRewardedAd(onRewardEarned: () {
-                                        Navigator.of(context).pop(true);
-                                      });
-                                    },
-                                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF43E97B)),
-                                    child: Text('Ver anuncio', style: GoogleFonts.fredoka(color: Colors.black)),
-                                  ),
-                                ],
-                              ),
-                            ).then((result) {
-                              if (result == true) {
-                                // Usuario vio el anuncio completo
-                                widget.onLevelSelected?.call(widget.maxLevelReached);
-                                widget.onGameStart?.call();
-                                Navigator.of(context).pop();
-                              }
+                            // Mostrar el Rewarded Ad directamente sin modal intermedio
+                            adManager.showRewardedAd(onRewardEarned: () {
+                              widget.onLevelSelected?.call(widget.maxLevelReached);
+                              widget.onGameStart?.call();
+                              Navigator.of(context).pop();
                             });
                           },
                         ),
@@ -498,6 +468,15 @@ class _SimpleLevelButton extends StatelessWidget {
     required this.onTap,
   });
 
+  /// Calcula si el color es claro para decidir color de texto
+  bool get _isLightColor {
+    // Luminancia percibida
+    return (0.299 * color.red + 0.587 * color.green + 0.114 * color.blue) > 186;
+  }
+
+  Color get _textColor => _isLightColor ? Colors.black : Colors.white;
+  Color get _subtitleColor => _isLightColor ? Colors.black54 : Colors.white70;
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -543,7 +522,7 @@ class _SimpleLevelButton extends StatelessWidget {
                     Text(
                       label,
                       style: GoogleFonts.fredoka(
-                        color: Colors.white,
+                        color: _textColor,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -554,7 +533,7 @@ class _SimpleLevelButton extends StatelessWidget {
                     Text(
                       subtitle,
                       style: GoogleFonts.fredoka(
-                        color: Colors.white70,
+                        color: _subtitleColor,
                         fontSize: 12,
                       ),
                       maxLines: 1,
