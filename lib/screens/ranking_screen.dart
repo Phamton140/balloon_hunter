@@ -547,6 +547,7 @@ actions: [
                     barrierColor: Colors.black87,
 builder: (context) => LevelSelectionDialog(
                       maxLevelReached: gameManager.saveManager.maxLevelReached,
+                      gameManager: gameManager,
                       onLevelSelected: (startLevel) {
                         if (Navigator.canPop(context)) Navigator.of(context).pop();
                         gameManager.startNewGame(startLevel: startLevel);
@@ -576,6 +577,7 @@ builder: (context) => LevelSelectionDialog(
         barrierColor: Colors.black87,
         builder: (context) => LevelSelectionDialog(
           maxLevelReached: gameManager.saveManager.maxLevelReached,
+          gameManager: gameManager,
           onLevelSelected: (startLevel) {
             Navigator.of(context).pop();
             onNewGame?.call();

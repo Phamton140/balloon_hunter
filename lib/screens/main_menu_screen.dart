@@ -461,6 +461,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
         barrierColor: Colors.black87,
         builder: (context) => LevelSelectionDialog(
           maxLevelReached: widget.gameManager.saveManager.maxLevelReached,
+          gameManager: widget.gameManager,
           onLevelSelected: (startLevel) {
             widget.gameManager.startNewGame(startLevel: startLevel);
           },
@@ -470,7 +471,7 @@ class _MainMenuScreenState extends State<MainMenuScreen> with TickerProviderStat
             // y el countdown llama a changeState(playing) que muestra el HUD
           },
         ),
-);
+      );
     }
   }
 }
