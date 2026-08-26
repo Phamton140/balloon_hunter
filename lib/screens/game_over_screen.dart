@@ -444,7 +444,10 @@ class _SimpleLevelButton extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          onTap();
+          // NO Navigator.pop() aquí - el callback ya lo maneja
+        },
         borderRadius: BorderRadius.circular(16),
         splashColor: color.withValues(alpha: 0.2),
         highlightColor: color.withValues(alpha: 0.1),
