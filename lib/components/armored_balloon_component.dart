@@ -15,29 +15,30 @@ import '../balloon_hunter_game.dart';
 /// - Golpe 3: Explota
 class ArmoredBalloonComponent extends PositionComponent
     with TapCallbacks, HasGameReference<BalloonHunterGame> {
-// Estado interno
+  // Estado interno
   int _hp = 3;
   int get hp => _hp;
   set hp(int value) {
     _hp = value.clamp(0, 3); // Clamp entre 0 y 3
   }
 
-// Propiedades
+  // Propiedades
   final BalloonType _type = BalloonType.armored;
   BalloonType get balloonType => _type;
-  
+
   double _speed = 0.0;
   set speed(double value) {
     _speed = value.clamp(0.0, double.infinity);
   }
+
   double _baseX = 0.0;
-  
+
   // Animación (viento)
   double _oscillationTime = 0.0;
   double _oscillationAmplitude = 0.0;
   double _oscillationFreq = 0.0;
   double _oscillationPhase = 0.0;
-  
+
   // Efecto de impacto visual
   double _hitFlashTime = 0.0;
 
@@ -99,7 +100,7 @@ class ArmoredBalloonComponent extends PositionComponent
 
   @override
   void update(double dt) {
-    if (!_active) return;
+    if (!_active || _hp <= 0) return;
     if (game.gameManager.state != GameState.playing || game.gameManager.isFrozen) return;
     super.update(dt);
 
@@ -120,7 +121,7 @@ class ArmoredBalloonComponent extends PositionComponent
 
   @override
   void render(Canvas canvas) {
-    if (!_active) return;
+    if (!_active || _hp <= 0) return;
 
     canvas.save();
     canvas.translate(size.x / 2, size.y / 2);
@@ -187,12 +188,6 @@ class ArmoredBalloonComponent extends PositionComponent
   }
 
   void _renderArmoredBalloon(Canvas canvas) {
-    // Estados visuales según HP:
-    // HP=3: Escudo completo (color premium, cruz protectora)
-    // HP=2: Escudo agrietado (primer golpe)
-    // HP=1: Sin escudo (segundo golpe - globo expuesto, MISMO COLOR)
-    // HP=0: Destruido (se maneja en explodeAndReturn)
-
     if (_hp == 3) {
       // Estado 1: Escudo completo
       _renderBaseBalloon(canvas, Palette.armoredPremium, Palette.armoredPremiumGlow);
@@ -202,11 +197,9 @@ class ArmoredBalloonComponent extends PositionComponent
       _renderBaseBalloon(canvas, Palette.armoredPremium, Palette.armoredPremiumGlow);
       _renderShield(canvas, Palette.armoredDamaged, showCross: false, showCracks: true);
     } else if (_hp == 1) {
-      // Estado 3: Sin escudo (segundo golpe - globo expuesto, MISMO COLOR BASE)
+      // Estado 3: Sin escudo (segundo golpe - globo expuesto)
       _renderBaseBalloon(canvas, Palette.armoredPremium, Palette.armoredPremiumGlow);
-      // No dibujamos escudo - el globo está expuesto
     } else {
-      // Fallback (no debería llegar aquí en render)
       _renderBaseBalloon(canvas, Palette.armoredPremium, Palette.armoredPremiumGlow);
       _renderShield(canvas, Palette.armoredPremium, showCross: true, showCracks: false);
     }
@@ -234,7 +227,6 @@ class ArmoredBalloonComponent extends PositionComponent
     canvas.drawPath(shieldPath, shieldBorderPaint);
 
     if (showCross) {
-      // Cruz protectora en el centro del escudo (escudo completo)
       final crossPaint = Paint()
         ..color = Colors.white.withOpacity(0.6)
         ..style = PaintingStyle.stroke
@@ -243,7 +235,6 @@ class ArmoredBalloonComponent extends PositionComponent
       canvas.drawLine(const Offset(0, -6), const Offset(0, 8), crossPaint);
       canvas.drawLine(const Offset(-7, 1), const Offset(7, 1), crossPaint);
     } else if (showCracks) {
-      // Grietas en el escudo por el daño (escudo agrietado)
       final crackPaint = Paint()
         ..color = Colors.black.withOpacity(0.6)
         ..style = PaintingStyle.stroke
@@ -254,7 +245,7 @@ class ArmoredBalloonComponent extends PositionComponent
         ..lineTo(-6, 6)
         ..lineTo(2, 16);
       canvas.drawPath(crackPath, crackPaint);
-      // Segunda grieta
+
       final crackPaint2 = Paint()
         ..color = Colors.black.withOpacity(0.5)
         ..style = PaintingStyle.stroke
@@ -268,41 +259,35 @@ class ArmoredBalloonComponent extends PositionComponent
 
   @override
   void onTapDown(TapDownEvent event) {
-    if (!_active || _tapped) return;
+    if (!_active || _tapped || _hp <= 0) return;
     _tapped = true;
     onTapped?.call(this);
-    // Removemos la bandera _tapped después de un breve delay si el globo sobrevive
+    
     Future.delayed(const Duration(milliseconds: 100), () {
-      if (_active) _tapped = false;
+      if (_active && _hp > 0) _tapped = false;
     });
   }
 
   /// Reduce HP y actualiza velocidad progresivamente
-  /// Velocidad según estado del escudo:
-  /// - HP=2 (1er impacto, escudo agrietado): velocidad verde (130.0)
-  /// - HP=1 (2do impacto, sin escudo): velocidad roja (180.0)
-  /// - HP=0 (3er impacto, destruido): velocidad roja (180.0)
   void takeHit() {
-    _hp--;
-    _hitFlashTime = 0.2; // Efecto de parpadeo/sacudida
+    if (!_active || _hp <= 0) return;
 
-    // Actualizar velocidad según estado del escudo
+    _hp--;
+    _hitFlashTime = 0.2;
+
     final variation = GameConstants.speedVariationMin +
         _random.nextDouble() *
             (GameConstants.speedVariationMax - GameConstants.speedVariationMin);
 
     switch (_hp) {
       case 2:
-        // 1er impacto: escudo agrietado -> velocidad verde (130.0)
         _speed = GameConstants.balloonSpeedGreen * variation;
         break;
       case 1:
-        // 2do impacto: sin escudo -> velocidad roja (180.0)
         _speed = GameConstants.balloonSpeedRed * variation;
         break;
       case 0:
-        // 3er impacto: destruido -> velocidad roja (180.0)
-        _speed = GameConstants.balloonSpeedRed * variation;
+        _speed = 0.0;
         break;
     }
   }
@@ -310,6 +295,11 @@ class ArmoredBalloonComponent extends PositionComponent
   void explodeAndReturn() {
     if (!_active) return;
     _active = false;
+    _hp = 0;
+    _speed = 0.0;
+    _tapped = true;
+    _hitFlashTime = 0.0;
+
     if (_pool != null) {
       _pool.release(this);
     } else {
@@ -320,6 +310,11 @@ class ArmoredBalloonComponent extends PositionComponent
   void _onEscaped() {
     if (!_active) return;
     _active = false;
+    _hp = 0;
+    _speed = 0.0;
+    _tapped = true;
+    _hitFlashTime = 0.0;
+
     onEscaped?.call(this);
     if (_pool != null) {
       _pool.release(this);
@@ -329,12 +324,13 @@ class ArmoredBalloonComponent extends PositionComponent
   }
 
   void applySlowMultiplier(double multiplier) {
+    if (!_active || _hp <= 0) return;
     _speed *= multiplier;
   }
   
   @override
   bool containsLocalPoint(Vector2 point) {
-    if (!_active || _tapped) return false;
+    if (!_active || _tapped || _hp <= 0) return false;
     return super.containsLocalPoint(point);
   }
 }

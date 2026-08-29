@@ -5,7 +5,6 @@ import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import '../models/balloon_type.dart';
-import '../utils/constants.dart';
 
 /// Partícula individual de la explosión
 class _Particle {
@@ -46,6 +45,7 @@ class ExplosionComponent extends PositionComponent {
 
   ExplosionComponent() {
     anchor = Anchor.center;
+    size = Vector2.all(60.0);
   }
 
   /// Configura la explosión antes de añadirla al juego
@@ -54,11 +54,14 @@ class ExplosionComponent extends PositionComponent {
     required BalloonType type,
     dynamic pool,
   }) {
-    this.position = position;
+    // Clonar la posición explícitamente para desacoplar del objeto del globo
+    this.position = position.clone();
     _type = type;
     _pool = pool;
     _active = true;
     _finished = false;
+    
+    // Limpieza total del estado previo de partículas
     _particles.clear();
     _spawnParticles();
   }
@@ -73,11 +76,10 @@ class ExplosionComponent extends PositionComponent {
       final speed = 60.0 + _random.nextDouble() * 180.0;
       final life = 0.4 + _random.nextDouble() * 0.5;
 
-      // Alternar entre color base y color brillante
       final color = _random.nextBool() ? baseColor : brightColor;
 
       _particles.add(_Particle(
-        position: Vector2.zero(),
+        position: Vector2.zero(), // Nace estrictamente en el centro (0,0) local
         velocity: Vector2(cos(angle) * speed, sin(angle) * speed),
         life: life,
         maxLife: life,
@@ -88,7 +90,6 @@ class ExplosionComponent extends PositionComponent {
       ));
     }
 
-    // Para globo negro: partículas extra más grandes
     if (_type == BalloonType.black) {
       for (int i = 0; i < 20; i++) {
         final angle = _random.nextDouble() * 2 * pi;
@@ -117,7 +118,8 @@ class ExplosionComponent extends PositionComponent {
 
   @override
   void update(double dt) {
-    if (!_active) return;
+    if (!_active || _finished) return;
+    super.update(dt);
 
     bool anyAlive = false;
     for (final p in _particles) {
@@ -125,26 +127,26 @@ class ExplosionComponent extends PositionComponent {
       anyAlive = true;
 
       p.position += p.velocity * dt;
-      p.velocity *= (1.0 - dt * 3.0); // Fricción
-      p.velocity.y += 200 * dt; // Gravedad leve
+      p.velocity *= (1.0 - dt * 3.0);
+      p.velocity.y += 200 * dt;
       p.life -= dt;
       p.rotation += p.rotationSpeed * dt;
     }
 
     if (!anyAlive && !_finished) {
-      _finished = true;
-      _active = false;
-      if (_pool != null) {
-        _pool.release(this);
-      } else {
-        removeFromParent();
-      }
+      _resetAndRelease();
     }
   }
 
   @override
   void render(Canvas canvas) {
-    if (!_active) return;
+    if (!_active || _finished) return;
+
+    // Guardar el estado del canvas del motor
+    canvas.save();
+    
+    // Trasladar al centro local del componente
+    canvas.translate(size.x / 2, size.y / 2);
 
     for (final p in _particles) {
       if (p.isDead) continue;
@@ -157,18 +159,36 @@ class ExplosionComponent extends PositionComponent {
             : null;
 
       canvas.save();
+      // Trasladar a la posición relativa de la partícula
       canvas.translate(p.position.x, p.position.y);
       canvas.rotate(p.rotation);
 
-      // Formas alternadas: círculos y cuadrados pequeños
       if (p.size > 8) {
         canvas.drawCircle(Offset.zero, p.size * p.progress, paint);
       } else {
         final half = p.size * p.progress * 0.5;
-        canvas.drawRect(Rect.fromCenter(center: Offset.zero, width: half * 2, height: half * 2), paint);
+        canvas.drawRect(
+          Rect.fromCenter(center: Offset.zero, width: half * 2, height: half * 2),
+          paint,
+        );
       }
 
       canvas.restore();
+    }
+
+    // Restaurar el estado del canvas
+    canvas.restore();
+  }
+
+  void _resetAndRelease() {
+    _finished = true;
+    _active = false;
+    _particles.clear();
+
+    if (_pool != null) {
+      _pool.release(this);
+    } else {
+      removeFromParent();
     }
   }
 }

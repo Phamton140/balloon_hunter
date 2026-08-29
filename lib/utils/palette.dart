@@ -8,6 +8,7 @@ class Palette {
   // -- Colores de globos --
   static const Color balloonYellow = Color(0xFFFFD600);
   static const Color balloonYellowGlow = Color(0xFFFFF176);
+  static const Color balloonDisnairy = Color(0xFFD700);
   static const Color balloonGreen = Color(0xFF43E97B);
   static const Color balloonGreenGlow = Color(0xFFA8FF78);
   static const Color balloonRed = Color(0xFFFF4757);

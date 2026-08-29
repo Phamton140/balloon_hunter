@@ -21,10 +21,12 @@ class EnemyDirector {
   // Intervalos mínimos para especiales (segundos)
   static const double _minBirdInterval = 2.0; // Mucho más frecuente
   static const double _minBlueInterval = 30.0;
-  static const double _minBlackInterval = 60.0;
+  static const double _minBlackInterval = 2.0;
   static const double _minClockInterval = 30.0;
 
-  /// Selecciona un tipo de globo normal según las probabilidades del nivel
+  /// Selecciona un tipo de globo normal según las probabilidades del nivel.
+  /// NOTA: Únicamente debe retornar tipos de globos normales (yellow, green, red).
+  /// La decisión de spawnear un blindado se maneja en [shouldSpawnArmoredBalloon].
   BalloonType selectBalloonType(LevelConfig config) {
     final weights = config.balloonTypeWeights; // [yellow, green, red]
     final roll = _random.nextDouble();
@@ -44,7 +46,7 @@ class EnemyDirector {
     return false;
   }
 
-  /// ¿Debe aparecer el globo azul especial? (Desbloqueo: Nivel 5)
+  /// ¿Debe aparecer el globo azul especial? (Desbloqueo: Nivel 10)
   bool shouldSpawnBlueBalloon(LevelConfig config, int maxLevelReached) {
     if (maxLevelReached < 10) return false;
     
@@ -59,19 +61,21 @@ class EnemyDirector {
 
   /// Determina si debe aparecer un globo blindado en el ciclo actual.
   bool shouldSpawnArmoredBalloon(LevelConfig config, int maxLevelReached) {
-    if (maxLevelReached < 60) return false;
+    if (maxLevelReached < 20) return false;
     
-    // Podemos reutilizar la probabilidad directamente
-    final roll = _random.nextDouble();
-    if (roll < config.armoredBalloonProbability) {
-      return true;
-    }
-    return false;
+    // Evalúa la probabilidad configurada para globos blindados
+    //final roll = _random.nextDouble();
+    //if (roll < config.armoredBalloonProbability) {
+      //return true;
+    //}
+    //return false;
+
+    return _random.nextDouble() < 0.50;
   }
 
-  /// ¿Debe aparecer el globo negro especial? (Desbloqueo: Nivel 20)
+  /// ¿Debe aparecer el globo negro especial? (Desbloqueo: Nivel 30)
   bool shouldSpawnBlackBalloon(LevelConfig config, int maxLevelReached) {
-    if (maxLevelReached < 20) return false;
+    /*if (maxLevelReached < 30) return false;
     
     if (_timeSinceLastBlack < _minBlackInterval) return false;
     final roll = _random.nextDouble();
@@ -80,11 +84,21 @@ class EnemyDirector {
       return true;
     }
     return false;
+    */
+
+    if (_timeSinceLastBlack < _minBlackInterval) return false;
+    
+    final roll = _random.nextDouble();
+    if (roll < 0.80) { // 80% de probabilidad de ser bomba
+      _timeSinceLastBlack = 0.0;
+      return true;
+    }
+    return false;
   }
 
-  /// ¿Debe aparecer el globo reloj especial? (Desbloqueo: Nivel 15)
+  /// ¿Debe aparecer el globo reloj especial? (Desbloqueo: Nivel 40)
   bool shouldSpawnClockBalloon(LevelConfig config, int maxLevelReached) {
-    if (maxLevelReached < 50) return false;
+    if (maxLevelReached < 40) return false;
     
     if (_timeSinceLastClock < _minClockInterval) return false;
     final roll = _random.nextDouble();

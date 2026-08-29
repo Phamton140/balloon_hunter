@@ -112,9 +112,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   if (widget.gameManager.authManager.playerName.trim().toLowerCase() == 'melquisedec' ||
                       widget.gameManager.authManager.playerName.trim().toLowerCase().startsWith('19_69_') ||
                       widget.gameManager.authManager.playerName.trim().toLowerCase().startsWith('19_96_')) ...[
+                    
+                    const SizedBox(height: 16),
+                    
                     _SettingCard(
                       icon: Icons.delete_forever,
-                      title: 'Restablecer Progreso (Modo Pruebas)',
+                      title: 'Restablecer Progreso',
                       subtitle: 'Borra puntuaciones y nivel, pero mantiene tu usuario',
                       trailing: ElevatedButton(
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),

@@ -4,7 +4,7 @@
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/material.dart' hide Timer;
+import 'package:flutter/material.dart';
 import 'components/background_component.dart';
 import 'components/balloon_component.dart';
 import 'components/bird_component.dart';
@@ -83,41 +83,27 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
 
   @override
   Future<void> onLoad() async {
-    // 1. Inicializar componentes asíncronos de los gestores
     await audioManager.initialize();
-    
-    // Inicializar el GameManager (que a su vez inicializa saveManager, authManager, etc.)
     await gameManager.initialize();
-    
-    // Iniciar sincronización en la nube en segundo plano
     await cloudSyncManager.initialize();
-    
-    // Configurar observador del ciclo de vida para Flame
-    // No necesitamos LifecycleListener porque la app principal lo maneja
 
-    // 2. Inicializar SpawnManager con pools
     spawnManager.initialize(
       addToGame: add,
       getScreenWidth: () => size.x,
       getScreenHeight: () => size.y,
     );
 
-    // 3. Registrar callbacks de colisión
     _setupCollisionCallbacks();
 
-    // 4. Registrar callbacks del GameManager
     gameManager.onGameOver = _onGameOverCallback;
     gameManager.onLevelComplete = _onLevelCompleteCallback;
     gameManager.onBlackBalloonActivated = _onBlackBalloonActivated;
 
-    // 5. Registrar event handlers
     _setupEventHandlers();
 
-    // 6. Añadir fondo
     background = BackgroundComponent();
     add(background);
 
-    // 7. Mostrar la pantalla inicial según el estado
     if (gameManager.state == GameState.registration) {
       overlays.add(GameConstants.overlayRegistration);
     } else {
@@ -125,30 +111,21 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
     }
   }
 
-  // ==========================================================================
-  // GAME LOOP
-  // ==========================================================================
-
   @override
   void update(double dt) {
-    // Es vital llamar a super.update SIEMPRE para que Flame procese el ciclo
-    // de vida de los componentes, añada hijos y procese animaciones.
     super.update(dt);
 
     if (gameManager.state != GameState.playing || gameManager.isFrozen) return;
 
-    // Actualizar gestores de tiempo
     timerManager.update(dt);
     gameManager.update(dt);
     enemyDirector.update(dt);
 
-    // Verificar tiempo agotado
     if (timerManager.isTimeUp && !_gameOverTriggered) {
       _onLevelTimeUp();
       return;
     }
 
-    // Ciclo de spawn
     _spawnTimer += dt;
     final spawnDelay = enemyDirector.nextSpawnDelay(levelManager.config);
 
@@ -156,41 +133,28 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
       _spawnTimer = 0.0;
       _handleSpawn();
     }
-
-    // Actualizar velocidad de globos si hay slow motion activo
-    // (los globos aplican slowMultiplier en su configure(), no en runtime)
   }
-
-  // ==========================================================================
-  // SPAWN
-  // ==========================================================================
 
   void _handleSpawn() {
     final config = levelManager.config;
     final maxLevel = gameManager.saveManager.maxLevelReached;
 
-    // ¿Globo negro especial?
     if (enemyDirector.shouldSpawnBlackBalloon(config, maxLevel)) {
       _spawnSpecialBalloon(BalloonType.black);
       return;
     }
 
-    // ¿Globo azul especial?
     if (enemyDirector.shouldSpawnBlueBalloon(config, maxLevel)) {
       _spawnSpecialBalloon(BalloonType.blue);
-      // También puede aparecer un globo normal en el mismo ciclo
     }
 
-    // ¿Globo reloj especial?
     if (enemyDirector.shouldSpawnClockBalloon(config, maxLevel)) {
       _spawnSpecialBalloon(BalloonType.clock);
     }
 
-    // ¿Ave?
     if (enemyDirector.shouldSpawnBird(config)) {
       _spawnBird();
     } else {
-      // Globo normal
       _spawnNormalBalloon();
     }
   }
@@ -199,21 +163,18 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
     final config = levelManager.config;
     final maxLevel = gameManager.saveManager.maxLevelReached;
 
-    // ¿Globo blindado?
     if (enemyDirector.shouldSpawnArmoredBalloon(config, maxLevel)) {
-      final balloon = spawnManager.spawnArmoredBalloon();
-      balloon.onTapped = _onArmoredBalloonTapped;
-      balloon.onEscaped = _onArmoredBalloonEscaped;
-      return; // Los blindados reemplazan un spawn normal para no saturar la pantalla
+      final armoredBalloon = spawnManager.spawnArmoredBalloon();
+      armoredBalloon.onTapped = _onArmoredBalloonTapped;
+      armoredBalloon.onEscaped = _onArmoredBalloonEscaped;
+      return; 
     }
 
-    // ¿Globo normal?
     final type = enemyDirector.selectBalloonType(levelManager.config);
     final balloon = spawnManager.spawnBalloon(type);
     balloon.onTapped = _onBalloonTapped;
     balloon.onEscaped = _onBalloonEscaped;
 
-    // Apply slow motion post-configure if active
     if (gameManager.slowMultiplier < 1.0) {
       balloon.applySlowMultiplier(gameManager.slowMultiplier);
     }
@@ -230,22 +191,35 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
   }
 
   // ==========================================================================
-  // CALLBACKS DE TOQUE
+  // CALLBACKS DE TOQUE (POSICIONAMIENTO CORREGIDO MEDIANTE .clone())
   // ==========================================================================
 
   void _onBalloonTapped(BalloonComponent balloon) {
     if (gameManager.state != GameState.playing) return;
 
+    // Clonar la posición antes de liberar el componente al pool
+    final targetPosition = balloon.position.clone();
+
     balloon.explodeAndReturn();
-    spawnManager.spawnExplosion(balloon.position, type: balloon.balloonType);
-    collisionManager.handleBalloonTap(balloon.balloonType);
+    spawnManager.spawnExplosion(targetPosition, type: balloon.balloonType);
+
+    if (balloon.balloonType == BalloonType.black) {
+      audioManager.playPopBlack();
+      _triggerVibration(strong: true);
+      gameManager.activateBlackBalloon();
+    } else {
+      collisionManager.handleBalloonTap(balloon.balloonType);
+    }
   }
 
   void _onBirdTapped(BirdComponent bird) {
     if (gameManager.state != GameState.playing) return;
 
     _birdHitGameOver = true;
-    spawnManager.spawnExplosion(bird.position, type: BalloonType.red);
+    final targetPosition = bird.position.clone();
+    
+    bird.removeFromParent(); // o return to pool según corresponda
+    spawnManager.spawnExplosion(targetPosition, type: BalloonType.red);
     collisionManager.handleBirdTap();
   }
 
@@ -263,31 +237,25 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
   void _onArmoredBalloonTapped(ArmoredBalloonComponent armored) {
     if (gameManager.state != GameState.playing) return;
     
-    // Reproducir un sonido metálico. Se puede simular bajando el pitch o usando playHit
-    // Como aún no tenemos un audio especial, usamos playPopBlack o uno genérico:
-    // Idealmente: audioManager.playMetalHit();
-    // Por ahora reusaremos popBlack para el daño
-    
     armored.takeHit();
     
     if (armored.hp <= 0) {
-      // Explotó
-      audioManager.playPopRed(); // Sonido estándar de explosión de globo
-      spawnManager.spawnExplosion(armored.position, type: armored.balloonType);
+      final targetPosition = armored.position.clone();
+      
+      audioManager.playPopRed();
+      spawnManager.spawnExplosion(targetPosition, type: armored.balloonType);
       
       collisionManager.handleBalloonTap(armored.balloonType);
       
       add(FloatingTextComponent(
-          text: '+10',
-          position: armored.position.clone(),
-          color: Colors.white,
+        text: '+10',
+        position: targetPosition,
+        color: Colors.white,
       ));
       
       armored.explodeAndReturn();
     } else {
-      // Solo recibió daño
-      audioManager.playPopBlack(); // Simularemos el golpe duro con este sonido por ahora
-      // Se podría añadir texto de "+Daño" flotante si se desea
+      audioManager.playPopBlack();
     }
   }
 
@@ -303,30 +271,26 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
   void _onSpecialBalloonTapped(SpecialBalloonComponent special) {
     if (gameManager.state != GameState.playing) return;
 
-    spawnManager.spawnExplosion(special.position, type: special.specialType);
+    final targetPosition = special.position.clone();
+    special.removeFromParent();
+
+    spawnManager.spawnExplosion(targetPosition, type: special.specialType);
     collisionManager.handleSpecialBalloonTap(special.specialType);
   }
 
-  // ==========================================================================
-  // SETUP DE CALLBACKS
-  // ==========================================================================
-
   void _setupCollisionCallbacks() {
-    // Globo normal explotado
     collisionManager.onBalloonHit = (BalloonType type) {
       scoreManager.addPoints(type.points);
       _playBalloonSound(type);
       _triggerVibration();
     };
 
-    // Ave tocada → GAME OVER
     collisionManager.onBirdHit = () {
       audioManager.playBirdHit();
       _triggerVibration(strong: true);
       gameManager.triggerGameOver();
     };
 
-    // Globo especial tocado
     collisionManager.onSpecialBalloonHit = (BalloonType type) {
       if (type == BalloonType.blue) {
         audioManager.playPopBlue();
@@ -336,10 +300,9 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
         audioManager.playPopBlack();
         gameManager.activateBlackBalloon();
       } else if (type == BalloonType.clock) {
-        audioManager.playLevelUp(); // Usaremos este sonido que da sensación de premio
+        audioManager.playLevelUp();
         gameManager.activateClockBalloon();
         
-        // Mostrar animación de texto flotante en el centro de la pantalla
         add(FloatingTextComponent(
           text: '-10s',
           position: Vector2(size.x / 2, size.y / 2),
@@ -348,16 +311,13 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
       }
     };
 
-    // Miss (tap en zona vacía) - no se usa directamente, los taps se consumen por componentes
     collisionManager.onMiss = () {
       scoreManager.registerMiss();
     };
   }
 
   void _setupEventHandlers() {
-    // Slow motion start
     eventManager.register(GameEventType.slowMotionStart, (event) {
-      debugPrint('[Game] Slow motion started');
       for (final b in children.whereType<BalloonComponent>()) {
         b.applySlowMultiplier(0.5);
       }
@@ -366,9 +326,7 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
       }
     });
 
-    // Slow motion end
     eventManager.register(GameEventType.slowMotionEnd, (event) {
-      debugPrint('[Game] Slow motion ended');
       for (final b in children.whereType<BalloonComponent>()) {
         b.applySlowMultiplier(1.0);
       }
@@ -377,10 +335,7 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
       }
     });
 
-    // Globo negro
-    eventManager.register(GameEventType.blackBalloonExplosion, (event) {
-      // La lógica real se maneja en _onBlackBalloonActivated
-    });
+    eventManager.register(GameEventType.blackBalloonExplosion, (event) {});
   }
 
   void _onGameOverCallback() {
@@ -395,27 +350,33 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
   }
 
   void _onBlackBalloonActivated() {
-    // Destruir todos los globos normales y sumar sus puntos
-    final balloons = spawnManager.removeAllNormalBalloons(children.toList());
     int totalPoints = 0;
+    int destroyedCount = 0;
+
+    final balloons = spawnManager.removeAllNormalBalloons(children.toList());
     for (final b in balloons) {
       totalPoints += b.balloonType.points;
+      destroyedCount++;
+      // Crear animación individual de explosión en la posición de cada globo eliminado por la bomba
+      spawnManager.spawnExplosion(b.position.clone(), type: b.balloonType);
     }
+
+    final armoredBalloons = children.whereType<ArmoredBalloonComponent>().toList();
+    for (final armored in armoredBalloons) {
+      armored.takeHit();
+
+      if (armored.hp <= 0) {
+        totalPoints += armored.balloonType.points;
+        destroyedCount++;
+        spawnManager.spawnExplosion(armored.position.clone(), type: armored.balloonType);
+        armored.explodeAndReturn();
+      }
+    }
+
     if (totalPoints > 0) {
-      scoreManager.addBulkPoints(totalPoints, balloons.length);
+      scoreManager.addBulkPoints(totalPoints, destroyedCount);
     }
-
-    // Debilitar todos los globos blindados, quitando sus escudos
-    // Dejan hp = 1 (estado vulnerable) para que el usuario los explote con 1 toque
-    spawnManager.stripArmoredShields(children.toList());
-    
-    // Y limpiar las aves de la pantalla sin sumar puntos
-    // spawnManager.removeAllBirds(children.toList()); // MODIFICADO: Ahora preserva aves por el medio ambiente
   }
-
-  // ==========================================================================
-  // TRANSICIONES DE ESTADO
-  // ==========================================================================
 
   void _onLevelTimeUp() {
     _gameOverTriggered = true;
@@ -426,64 +387,32 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
     }
   }
 
-  /// Inicia una nueva partida — llamado desde las pantallas
   Future<void> startGame() async {
     _gameOverTriggered = false;
     _birdHitGameOver = false;
     _spawnTimer = 0.0;
     enemyDirector.reset();
     spawnManager.reset();
-
-    // Limpiar componentes del juego anterior (no el fondo)
     _clearGameComponents();
   }
 
-  /// Pausa el juego
-  void pauseGame() {
-    // Overlays are managed by GameManager state in main.dart
-  }
+  void pauseGame() {}
 
-  /// Reanuda el juego
-  void resumeGame() {
-    // Overlays are managed by GameManager state in main.dart
-  }
+  void resumeGame() {}
 
-  /// Vuelve al menú
   void goToMenu() {
     _gameOverTriggered = false;
     _clearGameComponents();
   }
 
   void _clearGameComponents() {
-    children
-        .whereType<BalloonComponent>()
-        .toList()
-        .forEach((c) => c.removeFromParent());
-    children
-        .whereType<BirdComponent>()
-        .toList()
-        .forEach((c) => c.removeFromParent());
-    children
-        .whereType<SpecialBalloonComponent>()
-        .toList()
-        .forEach((c) => c.removeFromParent());
-    children
-        .whereType<ArmoredBalloonComponent>()
-        .toList()
-        .forEach((c) => c.removeFromParent());
-    children
-        .whereType<ExplosionComponent>()
-        .toList()
-        .forEach((c) => c.removeFromParent());
-    children
-        .whereType<IceEffectComponent>()
-        .toList()
-        .forEach((c) => c.removeFromParent());
+    children.whereType<BalloonComponent>().toList().forEach((c) => c.removeFromParent());
+    children.whereType<BirdComponent>().toList().forEach((c) => c.removeFromParent());
+    children.whereType<SpecialBalloonComponent>().toList().forEach((c) => c.removeFromParent());
+    children.whereType<ArmoredBalloonComponent>().toList().forEach((c) => c.removeFromParent());
+    children.whereType<ExplosionComponent>().toList().forEach((c) => c.removeFromParent());
+    children.whereType<IceEffectComponent>().toList().forEach((c) => c.removeFromParent());
   }
-
-  // ==========================================================================
-  // AUDIO Y FEEDBACK
-  // ==========================================================================
 
   void _playBalloonSound(BalloonType type) {
     switch (type) {
@@ -495,6 +424,9 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
         break;
       case BalloonType.red:
         audioManager.playPopRed();
+        break;
+      case BalloonType.black:
+        audioManager.playPopBlack();
         break;
       default:
         break;
@@ -508,10 +440,6 @@ class BalloonHunterGame extends FlameGame with TapCallbacks {
       HapticFeedback.lightImpact();
     }
   }
-
-  // ==========================================================================
-  // TAPS EN ZONA VACÍA (miss)
-  // ==========================================================================
 
   @override
   void onTapDown(TapDownEvent event) {

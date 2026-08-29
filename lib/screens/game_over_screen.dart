@@ -218,7 +218,7 @@ class _GameOverScreenState extends State<GameOverScreen> {
   void _share(int score, int level) {
     Share.share(
       '🎈 Jugué Balloon Hunter hasta el Nivel $level con $score puntos.\n'
-      '¿Puedes superarme? ¡Descarga el juego! 🎮',
+      '¿Puedes superarme? ¡Descarga el juego! 🎮 \n',
       subject: 'Balloon Hunter - Mi puntuación',
     );
   }
@@ -341,22 +341,21 @@ class _LevelSelectionDialogState extends State<LevelSelectionDialog> with Single
         return Transform.scale(
           scale: _scaleAnimation.value,
           child: Dialog(
-            backgroundColor: Colors.transparent,
             insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF2C3E50), Color(0xFF000000)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white24, width: 2),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20, offset: const Offset(0, 10)),
-                ],
-              ),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF2C3E50), Color(0xFF000000)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white24, width: 2),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20, offset: const Offset(0, 10)),
+            ],
+          ),
               child: Stack(
                 children: [
                   Column(
@@ -370,12 +369,6 @@ class _LevelSelectionDialogState extends State<LevelSelectionDialog> with Single
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '¿Desde qué nivel quieres empezar?',
-                        style: GoogleFonts.fredoka(color: Colors.white70, fontSize: 16),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24),
@@ -394,8 +387,8 @@ class _LevelSelectionDialogState extends State<LevelSelectionDialog> with Single
                         const SizedBox(height: 12),
                         // Botón Continuar - color dorado/amarillo (globo amarillo)
                         _SimpleLevelButton(
-                          label: 'Continuar desde el Nivel ${widget.maxLevelReached}',
-                          subtitle: 'Requiere ver anuncio para continuar',
+                          label: 'Continuar en Nivel ${widget.maxLevelReached}',
+                          subtitle: 'Ver anuncio para continuar',
                           color: Palette.balloonYellow,
                           onTap: () async {
                             final adManager = AdManager();
@@ -504,8 +497,8 @@ class _SimpleLevelButton extends StatelessWidget {
             border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: color.withValues(alpha: 0.2),
-                blurRadius: 15,
+                color: color.withValues(alpha: 0.5),
+                blurRadius: 5,
                 offset: const Offset(0, 4),
               ),
             ],

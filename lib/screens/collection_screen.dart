@@ -28,13 +28,13 @@ class CollectionScreen extends StatelessWidget {
     final maxLevel = gameManager.saveManager.maxLevelReached;
 
     final allItems = [
-      _ItemConfig(1, (cl) => _buildThemeItem(name: 'Tema 1: Naturaleza', requiredLevel: 1, currentLevel: cl, previewAsset: 'assets/images/bg_afternoon.jpg')),
       _ItemConfig(10, (cl) => _buildBalloonItem(name: 'Globo de Hielo', description: 'Ralentiza el tiempo temporalmente.', requiredLevel: 10, currentLevel: cl, type: BalloonType.blue)),
-      _ItemConfig(20, (cl) => _buildBalloonItem(name: 'Globo Bomba', description: 'Explota todos los globos en pantalla.', requiredLevel: 20, currentLevel: cl, type: BalloonType.black)),
-      _ItemConfig(30, (cl) => _buildThemeItem(name: 'Tema 2: Desierto', requiredLevel: 30, currentLevel: cl, previewAsset: 'assets/images/bg_afternoon_2.jpg')),
-      _ItemConfig(40, (cl) => _buildThemeItem(name: 'Tema 3: Colinas', requiredLevel: 40, currentLevel: cl, previewAsset: 'assets/images/bg_afternoon_3.png')),
-      _ItemConfig(50, (cl) => _buildBalloonItem(name: 'Globo Reloj', description: 'Resta 5 segundos al temporizador.', requiredLevel: 50, currentLevel: cl, type: BalloonType.clock)),
-      _ItemConfig(60, (cl) => _buildBalloonItem(name: 'Globo Blindado', description: 'Requiere 3 toques para explotar.', requiredLevel: 60, currentLevel: cl, type: BalloonType.armored)),
+      _ItemConfig(20, (cl) => _buildBalloonItem(name: 'Globo Blindado', description: 'Requiere 3 toques para explotar.', requiredLevel: 20, currentLevel: cl, type: BalloonType.armored)),
+      _ItemConfig(25, (cl) => _buildThemeItem(name: 'Tema 1: Naturaleza', requiredLevel: 25, currentLevel: cl, previewAsset: 'assets/images/bg_afternoon.jpg')),
+      _ItemConfig(30, (cl) => _buildBalloonItem(name: 'Globo Bomba', description: 'Explota todos los globos en pantalla.', requiredLevel: 30, currentLevel: cl, type: BalloonType.black)),
+      _ItemConfig(35, (cl) => _buildThemeItem(name: 'Tema 2: Desierto', requiredLevel: 35, currentLevel: cl, previewAsset: 'assets/images/bg_afternoon_2.jpg')),
+      _ItemConfig(40, (cl) => _buildBalloonItem(name: 'Globo Reloj', description: 'Resta 5 segundos al temporizador.', requiredLevel: 40, currentLevel: cl, type: BalloonType.clock)),
+      _ItemConfig(50, (cl) => _buildThemeItem(name: 'Tema 3: Colinas', requiredLevel: 50, currentLevel: cl, previewAsset: 'assets/images/bg_afternoon_3.png')), 
     ];
 
     int visibleCount = 0;
@@ -96,7 +96,7 @@ class CollectionScreen extends StatelessWidget {
                 child: ListView(
                   physics: const BouncingScrollPhysics(),
                   children: [
-                    _buildSectionTitle('Recompensas por Nivel'),
+                    _buildSectionTitle('LOGROS DESBLOQUEADOS'),
                     ...visibleItems,
                     const SizedBox(height: 16),
                     Container(
@@ -112,7 +112,7 @@ class CollectionScreen extends StatelessWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'A medida que alcances niveles más altos, descubrirás nuevas sorpresas y retos. ¡Sigue cazando!',
+                              '¡Continúa desbloqueando nuevas funciones, cazador!.',
                               style: GoogleFonts.fredoka(
                                 fontSize: 14,
                                 color: Colors.white70,
@@ -139,7 +139,7 @@ class CollectionScreen extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: GoogleFonts.fredoka(
-          fontSize: 24,
+          fontSize: 20,
           color: Colors.white70,
           letterSpacing: 2,
         ),

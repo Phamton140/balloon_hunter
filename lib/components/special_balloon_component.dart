@@ -11,6 +11,33 @@ import '../utils/constants.dart';
 import '../utils/palette.dart';
 import '../balloon_hunter_game.dart';
 
+/// Representa una chispa/partícula emanando de la mecha encendida en el hilo.
+class _FuseSpark {
+  Vector2 position;
+  Vector2 velocity;
+  double opacity;
+  double radius;
+  double maxLifetime;
+  double currentLifetime;
+  Color color;
+
+  _FuseSpark({
+    required this.position,
+    required this.velocity,
+    required this.opacity,
+    required this.radius,
+    required this.maxLifetime,
+    required this.color,
+  }) : currentLifetime = 0.0;
+
+  bool update(double dt) {
+    currentLifetime += dt;
+    position += velocity * dt;
+    opacity = (1.0 - (currentLifetime / maxLifetime)).clamp(0.0, 1.0);
+    return currentLifetime < maxLifetime;
+  }
+}
+
 /// Componente de globo especial. Aparece brevemente (2-3s) y desaparece solo.
 /// Azul: activa slow motion. Negro: destruye todos los globos normales.
 /// No usa Object Pool (son muy poco frecuentes).
@@ -27,6 +54,11 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
   // Animación de pulso
   double _pulseTime = 0.0;
   double _scaleAnim = 1.0;
+
+  // Partículas para la mecha del globo negro
+  final List<_FuseSpark> _sparks = [];
+  double _sparkTimer = 0.0;
+  static const double _sparkInterval = 0.04;
 
   // Callbacks
   void Function(SpecialBalloonComponent)? onTapped;
@@ -52,6 +84,8 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
     _lifeTimer = 0.0;
     _pulseTime = 0.0;
     _scaleAnim = 1.0;
+    _sparks.clear();
+    _sparkTimer = 0.0;
     
     // Velocidad más amigable para que el usuario pueda identificarlos y tocarlos
     _speed = 180.0 + _random.nextDouble() * 50.0;
@@ -69,6 +103,16 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
     _pulseTime += dt * 3.0;
     _scaleAnim = 1.0 + sin(_pulseTime) * 0.08;
 
+    // Actualización de partículas de la mecha para el globo negro
+    if (_type == BalloonType.black) {
+      _sparks.removeWhere((spark) => !spark.update(dt));
+      _sparkTimer += dt;
+      if (_sparkTimer >= _sparkInterval) {
+        _sparkTimer = 0.0;
+        _emitSpark();
+      }
+    }
+
     // Subir a gran velocidad
     position.y -= _speed * dt;
     
@@ -79,6 +123,32 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
     if (position.y + (GameConstants.balloonHeight / 2) < GameConstants.hudHeight) {
       _disappear();
     }
+  }
+
+  void _emitSpark() {
+    final knotY = GameConstants.balloonHeight * 0.42;
+    // La punta inferior del hilo mecha está calculada en offset local
+    final fuseTip = Vector2(-sin(_pulseTime * 3) * 8, knotY + 30);
+
+    final angle = _random.nextDouble() * 2 * pi;
+    final speed = 15.0 + _random.nextDouble() * 35.0;
+    final velocity = Vector2(cos(angle), sin(angle)) * speed;
+
+    final isFireCore = _random.nextBool();
+    final color = isFireCore
+        ? (_random.nextBool() ? Colors.orangeAccent : Colors.yellowAccent)
+        : Colors.redAccent;
+
+    _sparks.add(
+      _FuseSpark(
+        position: fuseTip,
+        velocity: velocity,
+        opacity: 1.0,
+        radius: 1.5 + _random.nextDouble() * 2.5,
+        maxLifetime: 0.15 + _random.nextDouble() * 0.2,
+        color: color,
+      ),
+    );
   }
 
   @override
@@ -149,19 +219,51 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
       knotPaint,
     );
 
-    // 5. Hilo ondulante idéntico
+    // 5. Hilo ondulante / Mecha
+    final isBlack = _type == BalloonType.black;
     final stringPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.4 * alpha)
-      ..strokeWidth = 1.5
+      ..color = isBlack ? const Color(0xFF3E2723) : Colors.white.withValues(alpha: 0.4 * alpha)
+      ..strokeWidth = isBlack ? 2.5 : 1.5
+      ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
+
+    final endX = -sin(_pulseTime * 3) * 8;
+    final endY = knotY + 30;
 
     final stringPath = Path();
     stringPath.moveTo(0, knotY + 2);
     stringPath.quadraticBezierTo(
       sin(_pulseTime * 3) * 12, knotY + 15,
-      -sin(_pulseTime * 3) * 8, knotY + 30
+      endX, endY
     );
     canvas.drawPath(stringPath, stringPaint);
+
+    // 6. Animación de fuego y chispas en la punta del hilo si es el globo negro
+    if (isBlack) {
+      final fuseTipOffset = Offset(endX, endY);
+
+      // Resplandor exterior (Glow)
+      final sparkGlow = Paint()
+        ..color = Colors.orangeAccent.withValues(alpha: 0.6 * alpha)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+      canvas.drawCircle(fuseTipOffset, 6.0, sparkGlow);
+
+      // Núcleo del fuego
+      final sparkCore = Paint()..color = Colors.yellowAccent.withValues(alpha: alpha);
+      canvas.drawCircle(fuseTipOffset, 3.0, sparkCore);
+
+      // Emisión de partículas/chispas
+      for (final spark in _sparks) {
+        final sparkPaint = Paint()
+          ..color = spark.color.withValues(alpha: spark.opacity * alpha)
+          ..style = PaintingStyle.fill;
+        canvas.drawCircle(
+          Offset(spark.position.x, spark.position.y),
+          spark.radius,
+          sparkPaint,
+        );
+      }
+    }
   }
 
   void _renderBlueBalloon(Canvas canvas, double alpha) {
@@ -191,50 +293,12 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
   }
 
   void _renderBlackBalloon(Canvas canvas, double alpha) {
-    // Dibujar la base (Negro con borde rojo/neón)
+    // Globo totalmente negro y limpio. La mecha y la chispa se renderizan en _renderBaseBalloon
     _renderBaseBalloon(canvas, Palette.balloonBlack, Palette.balloonBlackGlow, alpha);
-
-    // Dibujar SOLO el ícono de la Bomba adentro del globo
-    final bombY = 4.0;
-    final bombRadius = size.x * 0.25;
-
-    // Esfera negra
-    canvas.drawCircle(Offset(0, bombY), bombRadius, Paint()..color = const Color(0xFF000000).withOpacity(alpha));
-    
-    // Borde blanco sutil para separar la bomba del fondo negro del globo
-    canvas.drawCircle(
-      Offset(0, bombY), 
-      bombRadius, 
-      Paint()
-        ..color = Colors.white.withOpacity(0.4 * alpha)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5,
-    );
-
-    // Cuello
-    canvas.drawRect(
-      Rect.fromLTWH(-6, bombY - bombRadius - 6, 12, 6),
-      Paint()..color = const Color(0xFF555555).withOpacity(alpha),
-    );
-    // Brillo 3D
-    canvas.drawCircle(Offset(-6, bombY - 6), 5, Paint()..color = Colors.white.withOpacity(0.25 * alpha));
-    // Mecha
-    final fusePath = Path()
-      ..moveTo(0, bombY - bombRadius - 6)
-      ..quadraticBezierTo(3, bombY - bombRadius - 12, 8, bombY - bombRadius - 16);
-    canvas.drawPath(
-      fusePath,
-      Paint()
-        ..color = const Color(0xFFD9A752).withOpacity(alpha)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
-    // Chispa
-    canvas.drawCircle(Offset(8, bombY - bombRadius - 16), 3, Paint()..color = const Color(0xFFFF9900).withOpacity(alpha));
   }
 
   void _renderClockBalloon(Canvas canvas, double alpha) {
-    // Dibujar la base (Ahora es de color Negro)
+    // Dibujar la base
     _renderBaseBalloon(canvas, Palette.balloonClock, Palette.balloonClockGlow, alpha);
 
     // Dibujar el reloj interno
@@ -282,6 +346,7 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
     _active = false;
     removeFromParent();
   }
+  
   @override
   bool containsLocalPoint(Vector2 point) {
     if (!_active || _tapped) return false;

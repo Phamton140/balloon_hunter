@@ -67,7 +67,7 @@ class LevelConfig {
     }
   }
 
-  /// Duración del nivel en segundos (siempre 60s)
+  /// Duración del nivel en segundos (siempre 45s)
   double get levelDuration => GameConstants.levelDuration;
 
   /// Retorna la característica desbloqueada según la progresión cada 10 niveles.
@@ -76,12 +76,12 @@ class LevelConfig {
   String get unlockedFeature {
     if (level >= 1 && level <= 10) return 'Globo azul (hielo)';
     if (level >= 11 && level <= 20) return 'Globo blindado';
-    if (level >= 21 && level <= 30) return 'Tema naturaleza';
-    if (level >= 31 && level <= 40) return 'Globo bomba';
-    if (level >= 41 && level <= 50) return 'Tema desierto';
-    if (level >= 51 && level <= 60) return 'Globo reloj';
-    if (level >= 61 && level <= 70) return 'Tema colinas';
-    if (level >= 71 && level <= 80) return 'Por especificar';
+    if (level >= 21 && level <= 25) return 'Tema naturaleza';
+    if (level >= 26 && level <= 30) return 'Globo bomba';
+    if (level >= 31 && level <= 35) return 'Tema desierto';
+    if (level >= 36 && level <= 40) return 'Globo reloj';
+    if (level >= 41 && level <= 50) return 'Tema colinas';
+    if (level >= 51 && level <= 100) return 'Por especificar';
     return 'Sin novedades';
   }
 
