@@ -142,12 +142,6 @@ class ExplosionComponent extends PositionComponent {
   void render(Canvas canvas) {
     if (!_active || _finished) return;
 
-    // Guardar el estado del canvas del motor
-    canvas.save();
-    
-    // Trasladar al centro local del componente
-    canvas.translate(size.x / 2, size.y / 2);
-
     for (final p in _particles) {
       if (p.isDead) continue;
 
@@ -159,7 +153,6 @@ class ExplosionComponent extends PositionComponent {
             : null;
 
       canvas.save();
-      // Trasladar a la posición relativa de la partícula
       canvas.translate(p.position.x, p.position.y);
       canvas.rotate(p.rotation);
 
@@ -175,20 +168,12 @@ class ExplosionComponent extends PositionComponent {
 
       canvas.restore();
     }
-
-    // Restaurar el estado del canvas
-    canvas.restore();
   }
 
   void _resetAndRelease() {
     _finished = true;
     _active = false;
     _particles.clear();
-
-    if (_pool != null) {
-      _pool.release(this);
-    } else {
-      removeFromParent();
-    }
+    _pool?.release(this);
   }
 }

@@ -397,22 +397,14 @@ class BalloonComponent extends PositionComponent
   void explodeAndReturn() {
     if (!_active) return;
     _active = false;
-    if (_pool != null) {
-      _pool.release(this);
-    } else {
-      removeFromParent();
-    }
+    _pool?.release(this);
   }
 
   void _onEscaped() {
     if (!_active) return;
     _active = false;
     onEscaped?.call(this);
-    if (_pool != null) {
-      _pool.release(this);
-    } else {
-      removeFromParent();
-    }
+    _pool?.release(this);
   }
 
   /// Actualiza la velocidad en tiempo real (para slow motion)

@@ -21,7 +21,7 @@ class EnemyDirector {
   // Intervalos mínimos para especiales (segundos)
   static const double _minBirdInterval = 2.0; // Mucho más frecuente
   static const double _minBlueInterval = 30.0;
-  static const double _minBlackInterval = 2.0;
+  static const double _minBlackInterval = 45.0;
   static const double _minClockInterval = 30.0;
 
   /// Selecciona un tipo de globo normal según las probabilidades del nivel.
@@ -63,33 +63,21 @@ class EnemyDirector {
   bool shouldSpawnArmoredBalloon(LevelConfig config, int maxLevelReached) {
     if (maxLevelReached < 20) return false;
     
-    // Evalúa la probabilidad configurada para globos blindados
-    //final roll = _random.nextDouble();
-    //if (roll < config.armoredBalloonProbability) {
-      //return true;
-    //}
-    //return false;
-
-    return _random.nextDouble() < 0.50;
+    //Evalúa la probabilidad configurada para globos blindados
+    final roll = _random.nextDouble();
+    if (roll < config.armoredBalloonProbability) {
+      return true;
+    }
+    return false;
   }
 
   /// ¿Debe aparecer el globo negro especial? (Desbloqueo: Nivel 30)
   bool shouldSpawnBlackBalloon(LevelConfig config, int maxLevelReached) {
-    /*if (maxLevelReached < 30) return false;
+    if (maxLevelReached < 30) return false;
     
     if (_timeSinceLastBlack < _minBlackInterval) return false;
     final roll = _random.nextDouble();
     if (roll < config.blackBalloonProbability) {
-      _timeSinceLastBlack = 0.0;
-      return true;
-    }
-    return false;
-    */
-
-    if (_timeSinceLastBlack < _minBlackInterval) return false;
-    
-    final roll = _random.nextDouble();
-    if (roll < 0.80) { // 80% de probabilidad de ser bomba
       _timeSinceLastBlack = 0.0;
       return true;
     }

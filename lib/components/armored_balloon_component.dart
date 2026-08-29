@@ -300,11 +300,7 @@ class ArmoredBalloonComponent extends PositionComponent
     _tapped = true;
     _hitFlashTime = 0.0;
 
-    if (_pool != null) {
-      _pool.release(this);
-    } else {
-      removeFromParent();
-    }
+    _pool?.release(this);
   }
 
   void _onEscaped() {
@@ -316,11 +312,7 @@ class ArmoredBalloonComponent extends PositionComponent
     _hitFlashTime = 0.0;
 
     onEscaped?.call(this);
-    if (_pool != null) {
-      _pool.release(this);
-    } else {
-      removeFromParent();
-    }
+    _pool?.release(this);
   }
 
   void applySlowMultiplier(double multiplier) {

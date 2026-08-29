@@ -35,8 +35,7 @@ class ObjectPool<T extends PositionComponent> {
 
   /// Devuelve un componente al pool para reutilización
   void release(T component) {
-    // No llamamos a removeFromParent() para evitar problemas de concurrencia en Flame.
-    // El componente se queda en el árbol pero con _active = false.
+    component.removeFromParent();
     _available.add(component);
   }
 

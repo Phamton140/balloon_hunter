@@ -275,11 +275,7 @@ class BirdComponent extends PositionComponent
 
   void disappear() {
     _active = false;
-    if (_pool != null) {
-      _pool.release(this);
-    } else {
-      removeFromParent();
-    }
+    _pool?.release(this);
   }
   @override
   bool containsLocalPoint(Vector2 point) {
