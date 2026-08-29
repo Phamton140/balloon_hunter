@@ -131,7 +131,7 @@ class FriendsManager extends ChangeNotifier {
     }
   }
 
-  /// Buscar amigos en Facebook y añadirlos si juegan Balloon Hunter
+/// Buscar amigos en Facebook y añadirlos si juegan Balloon Hunter
   Future<int> syncFacebookFriends() async {
     if (!_authManager.isLoggedIn || _authManager.facebookId == null) return 0;
     
@@ -151,7 +151,7 @@ class FriendsManager extends ChangeNotifier {
            final query = await _firestore.collection('users')
               .where('facebookId', whereIn: fbIds)
               .get();
-              
+           
            final newIds = <String>[];
            for (var doc in query.docs) {
              if (!_friendIds.contains(doc.id)) {
@@ -175,5 +175,33 @@ class FriendsManager extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
     return newFriendsAdded;
+  }
+
+  /// Elimina un amigo de la lista
+  Future<bool> removeFriend(String friendId) async {
+    if (!_authManager.isLoggedIn) return false;
+    if (!_friendIds.contains(friendId)) return true; // Ya no es amigo
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // Eliminar de la lista local
+      _friendIds.remove(friendId);
+      
+      // Actualizar en Firestore
+      await _firestore.collection('users').doc(_authManager.playerId).update({
+        'friendsList': FieldValue.arrayRemove([friendId])
+      });
+      
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('[FriendsManager] Error removing friend: $e');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 }

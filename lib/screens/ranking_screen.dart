@@ -453,10 +453,7 @@ class RankingScreen extends StatelessWidget {
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
                           onPressed: () {
-                            if (Navigator.canPop(ctx)) Navigator.pop(ctx);
-                            // Lógica para eliminar amigo (se haría en friends_manager)
-                            if (Navigator.canPop(context)) Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Amigo eliminado')));
+                            if (Navigator.canPop(ctx)) Navigator.pop(ctx, true);
                           },
                           child: Text('Confirmar', style: GoogleFonts.fredoka(color: Colors.white)),
                         ),
@@ -464,8 +461,12 @@ class RankingScreen extends StatelessWidget {
                     ),
                   );
                   if (confirmed && context.mounted) {
-                    // Aquí se llamaría a la eliminación real
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Funcionalidad de eliminación por implementar')));
+                    final success = await gameManager.friendsManager.removeFriend(playerData['playerId']);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(success ? 'Amigo eliminado' : 'Error al eliminar amigo'))
+                      );
+                    }
                   }
                 },
               )

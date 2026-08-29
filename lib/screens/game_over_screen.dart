@@ -136,25 +136,37 @@ class _GameOverScreenState extends State<GameOverScreen> {
 
                         const SizedBox(height: 20),
 
-                        // Botón de revivir (arriba)
+                        // Botón de revivir - siempre visible
                         AnimatedBuilder(
                           animation: AdManager(),
                           builder: (context, child) {
-                            if (AdManager().isRewardedAdLoaded) {
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: _GOButton(
-                                  label: '🎬 REVIVIR NIVEL',
-                                  gradient: const LinearGradient(colors: [Palette.balloonGreen, Color(0xFF00B09B)]),
-                                  onTap: () {
+                            final adLoaded = AdManager().isRewardedAdLoaded;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _GOButton(
+                                label: adLoaded ? '🎬 REVIVIR NIVEL' : '⏭️ CONTINUAR SIN ANUNCIO',
+                                gradient: adLoaded 
+                                    ? const LinearGradient(colors: [Palette.balloonGreen, Color(0xFF00B09B)])
+                                    : const LinearGradient(colors: [Colors.orange, Colors.deepOrange]),
+                                onTap: () {
+                                  if (adLoaded) {
                                     AdManager().showRewardedAd(onRewardEarned: () {
                                       onRevive?.call();
                                     });
-                                  },
-                                ).animate().scale(delay: 700.ms),
-                              );
-                            }
-                            return const SizedBox.shrink();
+                                  } else {
+                                    // Fallback: continuar sin anuncio
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Anuncio no disponible, ¡continuación concedida!'),
+                                        backgroundColor: Colors.orange,
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                    onRevive?.call();
+                                  }
+                                },
+                              ).animate().scale(delay: 700.ms),
+                            );
                           },
                         ),
 
@@ -399,14 +411,19 @@ class _LevelSelectionDialogState extends State<LevelSelectionDialog> with Single
                             }
                             
                             if (!adManager.isRewardedAdLoaded) {
+                              // Fallback: continuar sin anuncio
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('El anuncio no está disponible. Intenta más tarde.'),
-                                    backgroundColor: Colors.redAccent,
+                                    content: Text('Anuncio no disponible, ¡continuación concedida!'),
+                                    backgroundColor: Colors.orange,
+                                    duration: Duration(seconds: 2),
                                   ),
                                 );
                               }
+                              widget.onLevelSelected?.call(widget.maxLevelReached);
+                              widget.onGameStart?.call();
+                              Navigator.of(context).pop();
                               return;
                             }
                             

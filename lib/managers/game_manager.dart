@@ -174,6 +174,10 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     timerManager.start();
     _playTimeAccumulator = 0.0;
     _deactivateSlowMotion();
+    
+    // Shuffle playlist para variar la música en cada partida
+    audioManager.shufflePlaylist();
+    
     changeState(GameState.countdown);
     await audioManager.playBgm();
     
@@ -261,6 +265,10 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
     timerManager.reset();
     timerManager.start();
     _deactivateSlowMotion();
+    
+    // Shuffle playlist para variar la música al continuar
+    audioManager.shufflePlaylist();
+    
     changeState(GameState.countdown);
     await audioManager.playBgm();
   }
@@ -363,6 +371,9 @@ class GameManager extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> startReviveCountdown() async {
     timerManager.start();
     changeState(GameState.countdown);
+    
+    // Shuffle playlist al revivir para variar la música
+    audioManager.shufflePlaylist();
     await audioManager.playBgm();
   }
 
