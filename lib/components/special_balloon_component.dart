@@ -91,6 +91,11 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
     _speed = 180.0 + _random.nextDouble() * 50.0;
     position.x = x;
     position.y = y;
+
+    // Iniciar sonido de mecha si es globo negro
+    if (_type == BalloonType.black) {
+      game.gameManager.audioManager.startMechaLoop();
+    }
   }
 
   @override
@@ -338,12 +343,24 @@ class SpecialBalloonComponent extends PositionComponent with TapCallbacks, HasGa
     event.handled = true;
     _tapped = true;
     _active = false;
+    
+    // Detener mecha si es globo negro
+    if (_type == BalloonType.black) {
+      game.gameManager.audioManager.stopMechaLoop();
+    }
+    
     onTapped?.call(this);
     removeFromParent();
   }
 
   void _disappear() {
     _active = false;
+    
+    // Detener mecha si es globo negro
+    if (_type == BalloonType.black) {
+      game.gameManager.audioManager.stopMechaLoop();
+    }
+    
     removeFromParent();
   }
   

@@ -32,6 +32,10 @@ class AudioManager {
   final Map<String, AudioPool> _sfxPools = {};
   bool _isStartingBgm = false;
 
+  // -- Mecha (fuse) sound for black balloon --
+  AudioPlayer? _mechaPlayer;
+  bool _mechaPlaying = false;
+
   double get masterVolume => _masterVolume;
 
   /// Precarga todos los assets de audio para evitar latencia en el juego
@@ -49,6 +53,7 @@ class AudioManager {
         'pop_bubble.mp3',
         'ice.mp3',
         'pop_black.mp3',
+        'mecha.mp3',
         'bird_hit.mp3',
         'level_up.mp3',
       ]);
@@ -182,6 +187,35 @@ class AudioManager {
   /// Sonido al activar el globo negro (explosión masiva)
   Future<void> playPopBlack() async => _playSfx('pop_black.mp3');
 
+  /// Inicia el sonido de mecha en bucle para el globo negro
+  Future<void> startMechaLoop() async {
+    if (_masterVolume <= 0 || _mechaPlaying) return;
+    try {
+      _mechaPlayer = AudioPlayer();
+      await _mechaPlayer!.setVolume(_masterVolume * _masterVolume);
+      await _mechaPlayer!.setReleaseMode(ReleaseMode.loop);
+      await _mechaPlayer!.play(AssetSource('audio/mecha.mp3'));
+      _mechaPlaying = true;
+      debugPrint('[AudioManager] Mecha loop started');
+    } catch (e) {
+      debugPrint('[AudioManager] Mecha loop error: $e');
+    }
+  }
+
+  /// Detiene el sonido de mecha
+  Future<void> stopMechaLoop() async {
+    if (!_mechaPlaying || _mechaPlayer == null) return;
+    try {
+      await _mechaPlayer!.stop();
+      await _mechaPlayer!.dispose();
+      _mechaPlayer = null;
+      _mechaPlaying = false;
+      debugPrint('[AudioManager] Mecha loop stopped');
+    } catch (e) {
+      debugPrint('[AudioManager] Mecha loop stop error: $e');
+    }
+  }
+
   /// Sonido de Game Over por disparar un ave
   Future<void> playBirdHit() async => _playSfx('bird_hit.mp3');
 
@@ -211,6 +245,7 @@ class AudioManager {
     try {
       await _playerCompleteSubscription?.cancel();
       await _bgmPlayer?.dispose();
+      await stopMechaLoop();
       for (final pool in _sfxPools.values) {
         pool.dispose();
       }
